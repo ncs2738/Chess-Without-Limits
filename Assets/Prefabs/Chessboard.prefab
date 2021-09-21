@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8705233007804791321
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8705233007804791327}
+  - component: {fileID: 8705233007804791320}
+  m_Layer: 0
+  m_Name: Chessboard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8705233007804791327
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8705233007804791321}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8705233007804791320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8705233007804791321}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 201a27578fd0ddc4bb7e0b8019004dbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tile: {fileID: 1383391741686622788, guid: fef4be190143e6d40a23c102f329ee22, type: 3}
+  rows: 8
+  columns: 8
+  Material1: {fileID: 2100000, guid: b2ec6d64df8103746bdde9bc23be6876, type: 2}
+  Material2: {fileID: 2100000, guid: 92124bfd24df94e4c925b1066b020d91, type: 2}
+  HighlightedTileMaterial: {fileID: 2100000, guid: 1e9bbaf8f70453142bcecd9d31086971, type: 2}
+  TeamMaterials:
+  - {fileID: 2100000, guid: 7737a49d80bf55e46ae6ecaf52733af4, type: 2}
+  - {fileID: 2100000, guid: 6a2549e4356353144854d73548a83a37, type: 2}
+  Prefabs:
+  - {fileID: 7129073043357282552, guid: 0a054e5c20cbe494ca0c29e9ebde1836, type: 3}
+  - {fileID: 6808469733896094068, guid: a75230c2ba930044880b17db81b050f9, type: 3}
+  - {fileID: 1991765365350110604, guid: 17b1896e62381a3429086fd5fe526e32, type: 3}
+  - {fileID: 760007532297998553, guid: 233284ca4a4d9f8489f62d4ae8dfa2d4, type: 3}
+  - {fileID: 636592829343194421, guid: cbd52f24f860d35438871add5590289a, type: 3}
+  - {fileID: 4175082660874612711, guid: d1d0cde9548cdc3438be765dbf753d1c, type: 3}
+  currentPieceLayout: {fileID: 11400000, guid: de36a9ed9c5e09b42ade50698d85cf02, type: 2}

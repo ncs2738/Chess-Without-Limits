@@ -12,6 +12,17 @@ public class Tile : MonoBehaviour
     [SerializeField]
     public Material tileColor;
 
+    //will hold 4 objects - null, chesspiece, tile, boarder 
+    [SerializeField]
+    public List<GameObject> tilePlacements = new List<GameObject>();
+
+    public void Awake()
+    {
+        //TODO: CHANGE THIS TO 5 ADDITIONS
+        tilePlacements.Add(null);
+    }
+
+
     public void SetTileVars(int _rowIndex, int _columnIndex, Material _tileColor)
     {
         rowIndex = _rowIndex;
