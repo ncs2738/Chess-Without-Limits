@@ -306,6 +306,30 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[0]
+      value: 
+      objectReference: {fileID: 3776785434433618812, guid: 0a054e5c20cbe494ca0c29e9ebde1836, type: 3}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[1]
+      value: 
+      objectReference: {fileID: 3628546888523125623, guid: 233284ca4a4d9f8489f62d4ae8dfa2d4, type: 3}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[2]
+      value: 
+      objectReference: {fileID: 256339293224389571, guid: a75230c2ba930044880b17db81b050f9, type: 3}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[3]
+      value: 
+      objectReference: {fileID: 501448983791186190, guid: 17b1896e62381a3429086fd5fe526e32, type: 3}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[4]
+      value: 
+      objectReference: {fileID: 6111508808982397451, guid: cbd52f24f860d35438871add5590289a, type: 3}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: Prefabs.Array.data[5]
+      value: 
+      objectReference: {fileID: 7654657844329561320, guid: d1d0cde9548cdc3438be765dbf753d1c, type: 3}
     - target: {fileID: 8705233007804791321, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
       propertyPath: m_Name
       value: Chessboard

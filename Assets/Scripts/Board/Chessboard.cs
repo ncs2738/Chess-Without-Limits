@@ -39,34 +39,41 @@ public class Chessboard : MonoBehaviour
     ChessPiece attackingPiece;
     ChessPiece pieceToBeRemoved;
 
-    private bool IsPieceMoving = false;
+    private bool IsPieceAttacking = false;
 
 
     private void Awake()
     {
+        //On startup, generate our board - for now, it's just a simple 8x8 board
         GenerateSquareBoard(rows, columns);
+        //Then read in & spawn the pieces based off of the chess-piece layout script given
         CreatePiecesFromLayout(currentPieceLayout);
     }
 
     private void Update()
     {
+        //If we don't have a camera selected...
         if(!currentCamera)
         {
+            //grab the current camera
             currentCamera = Camera.current;
             return;
         }
 
+        //Do a raycast check to see if the player's hovering over any tiles (and soon to be pieces)
         RaycastHit raycast;
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
 
+        //If the player's hovering over a tile...
         if (Physics.Raycast(ray, out raycast, 100, LayerMask.GetMask("Tile")))
         {
+            //Grab the raycast's data
             GameObject hoveredTile = raycast.transform.gameObject;
             Debug.Log(hoveredTile);
             Tile t = hoveredTile.GetComponent<Tile>();
             Vector2Int hitPos;
 
-
+            //SAFE-KEEPING: Make sure we're hovering over a tile.
             if (t)
             {
                 hitPos = t.GetBoardIndex();
@@ -80,42 +87,52 @@ public class Chessboard : MonoBehaviour
             //If we just started hovering over the board & don't have a "last-hovered tile"...
             if (currentHoveredTile == -Vector2Int.one)
             {
+                //Set the current hovered tile to it
                 currentHoveredTile = hitPos;
-                //tilles[hitPos.x][hitPos.y].layer = LayerMask.NameToLayer("HoveredTile");
+                //Set the tile's material to being highlighted
                 tiles[hitPos.x][hitPos.y].GetComponent<Renderer>().material = HighlightedTileMaterial;
             }
 
             //If we've been hovering over the board & have a "last-hovered tile"
             if (currentHoveredTile != hitPos)
             {
+                //Reset the currently hovered tile's material
                 tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
-                //tilles[currentHoveredTile.x][currentHoveredTile.y].layer = LayerMask.NameToLayer("Tile");
+                //Update the current hovered tile
                 currentHoveredTile = hitPos;
-                //tilles[hitPos.x][hitPos.y].layer = LayerMask.NameToLayer("HoveredTile");
+                //Set it's material to being highlighted
                 tiles[hitPos.x][hitPos.y].GetComponent<Renderer>().material = HighlightedTileMaterial;
             }
 
-            if(!IsPieceMoving)
+            //If there's no pieces moving & attacking another on the board at moment...
+            if(!IsPieceAttacking)
             {
+                //Check for inputs:
+
                 //If we just left-clicked on a tile...
                 if (Input.GetMouseButtonDown(0))
                 {
-                    //TODO: CHECK IF ITS A CHECK PIECE ATOP OF IT
-                    //And the tile has a chess piece on it
-                    if (t != null && t.tilePlacements[0] != null)
+                    //If the currently hovered tile has something atop of it...
+                    if (t.tilePlacements[0] != null)
                     {
+                        //AND the item on the tile is a chess piece...
                         if (t.tilePlacements[0].GetComponent<ChessPiece>())
                         {
+                            //Get the chess piece...
                             ChessPiece tempPiece = t.tilePlacements[0].GetComponent<ChessPiece>();
 
-                            //TODO -REWRITE THIS TO ACTUALLY TAKE PROPER CONSIDERATIONS
                             // Is it the players piece?
+                            //TODO -REWRITE THIS TO ACTUALLY TAKE PROPER CONSIDERATIONS
+                            //if (tempPiece.teamColor == PlayersTeamColor)
                             if (tempPiece.teamColor == TeamColor.Black)
                             {
+                                //Select the player's piece
                                 currentlyDragged = tempPiece;
                             }
                             else
                             {
+                                //TODO: ADD THIS :0[
+                                //Highlight the piece's possible moves?
                                 currentlyDragged = tempPiece;
                             }
                         }
@@ -125,63 +142,87 @@ public class Chessboard : MonoBehaviour
                 //If we were dragging a piece & released the left-mouse button...
                 if (currentlyDragged != null && Input.GetMouseButtonUp(0))
                 {
-                    Vector2Int prevPosition = currentlyDragged.pieceCoordinates;
+                    //Grab the currently dragged pieces' starting tile's coordinates
+                    Vector2Int originalPosition = currentlyDragged.pieceCoordinates;
 
+                    //Check to see if the move was valid
                     bool isMoveValid = IsMoveValid(currentlyDragged, hitPos);
+
+                    //If it wasnt...
                     if (!isMoveValid)
                     {
-                        currentlyDragged.SetPosition(GetTileCenter(tiles[prevPosition.x][prevPosition.y]));
-                        currentlyDragged = null;
+                        //Move the piece back to it's last position
+                        currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
                     }
-                    else
-                    {
-                        currentlyDragged = null;
-                    }
+
+                    //set the currently dragged piece to null.
+                    currentlyDragged = null;
                 }
             }
         }
+
+        //The player's raycast hit nothing...
         else
         {
+            //If we have a currently dragged tile....
             if (currentHoveredTile != -Vector2Int.one)
             {
+                //Reset it's hovered-over material back to it's default color
                 tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
-                //tilles[currentHoveredTile.x][currentHoveredTile.y].layer = LayerMask.NameToLayer("Tile");
+                //Set our currently hovered tile to nothing.
                 currentHoveredTile = -Vector2Int.one;
             }
 
+            //If we were dragging a piece & let go of it off the board...
             if(currentlyDragged && Input.GetMouseButtonUp(0))
             {
-                Vector2Int prevPosition = currentlyDragged.pieceCoordinates;
-                currentlyDragged.SetPosition(GetTileCenter(tiles[prevPosition.x][prevPosition.y]));
+                //Grab the currently dragged pieces' starting tile's coordinates
+                Vector2Int originalPosition = currentlyDragged.pieceCoordinates;
+                //Move the piece back to it's last position
+                currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
+                //set the currently dragged piece to null.
                 currentlyDragged = null;
             }
         }
 
         //REMOVING PIECE ANIMATION
-        if(IsPieceMoving)
+        //If a piece is currently moving across the board & attacking another piece...
+        if (IsPieceAttacking)
         {
+            //Wait until it's close enough to the attacked piece...
             if (Vector3.Distance(attackingPiece.transform.position, pieceToBeRemoved.transform.position) < .35f)
             {
+                //Then remove the attacked from piece from play...
                 GameObject.Destroy(pieceToBeRemoved.gameObject);
-                IsPieceMoving = false;
+                //and finish the call.
+                IsPieceAttacking = false;
             }
         }
 
         //DRAG ANIMATION
+        //If we're currently dragging a chess piece...
+        //TODO - PROBABLY WILL WANT TO HAVE THIS JUST FOLLOW THE MOUSE INSTEAD...
         if(currentlyDragged)
         {
+            //Cast a plane onto the board to check for it's position
             Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * 1f);
+
+            //Get it's distance from the board...
             float distance = 0.0f;
             if(horizontalPlane.Raycast(ray, out distance))
             {
+                //Set it's new position to the distance
                 currentlyDragged.SetPosition(ray.GetPoint(distance) + Vector3.up * 1.5f);
             }
         }
     }
 
+    //COMENTED UP TILL HERE
+
+    //TILE FUNCTIONS
     private GameObject GenerateSingleTile(int rowLocation, int columnLocation)
     {
-        GameObject newTile = Instantiate(tile, new Vector3(rowLocation, -0.5f, columnLocation), Quaternion.identity);
+        GameObject newTile = Instantiate(tile, new Vector3(rowLocation, 0, columnLocation), Quaternion.identity);
         newTile.gameObject.name = string.Format("Row: " + (rowLocation + 1) + " - Column: " + (columnLocation + 1));
         newTile.transform.parent = transform;
         Tile t = newTile.GetComponent<Tile>();
@@ -208,25 +249,30 @@ public class Chessboard : MonoBehaviour
         return newTile;
     }
 
+    private Vector3 GetTileCenter(GameObject curTile)
+    {
+        Renderer tileRender = curTile.GetComponent<Renderer>();
+        float yOffset = tileRender.bounds.center.y != 0 ? tileRender.bounds.center.y + tileRender.bounds.center.y / 2 : 0.5f;
+
+        return new Vector3(tileRender.bounds.center.x, yOffset, tileRender.bounds.center.z);
+    }
+
     private void GenerateSquareBoard(int rowTiles, int columnTiles)
     {
         tiles = new Dictionary<int, Dictionary<int, GameObject>>();
-        //tiles = new GameObject[rowTiles, columnTiles];
         
         for(int i = 0; i < rowTiles; i++)
         {
-            //tilles.Add(rowTiles, new Dictionary<int, GameObject>());
             tiles[i] = new Dictionary<int, GameObject>();
 
             for(int j = 0; j < columnTiles; j++)
             {
                 tiles[i][j] = GenerateSingleTile(i, j);
-                //    tilles[rowTiles].Add(columnTiles, GenerateSingleTile(i, j));
-                // tiles[i, j] = GenerateSingleTile(i, j);
             }
         }
     }
 
+    //CHESS PIECE FUNCTIONS
     private ChessPiece SpawnChessPiece(ChessPieceType pieceType, Vector2Int newPos, TeamColor teamColor)
     {
         if(pieceType == 0 || teamColor == 0)
@@ -241,35 +287,25 @@ public class Chessboard : MonoBehaviour
         newPiece.teamColor = teamColor;
         newPiece.GetComponent<MeshRenderer>().material = TeamMaterials[(int)teamColor - 1];
 
-        PositionChessPiece(newPiece, newPos, true);
-
-        return newPiece;
-    }
-
-    private void PositionChessPiece(ChessPiece chessPiece, Vector2Int newPos, bool instantMovement = false)
-    {
         //activeChessPieces[chessPiece.teamColor].Find(obj => obj == chessPiece).pieceCoordinates = newPos;
         Tile selectedTile = tiles[newPos.x][newPos.y].GetComponent<Tile>();
-
         if (selectedTile.tilePlacements[0] == null)
         {
-            chessPiece.pieceCoordinates = newPos;
-            //chessPiece.transform.position = new Vector3(newPos.x, 1, newPos.y);
-            //chessPiece.transform.position = selectedTile.GetComponent<Renderer>().bounds.center;
-            //chessPiece.transform.position = GetTileCenter(selectedTile.gameObject);
-            chessPiece.SetPosition(GetTileCenter(selectedTile.gameObject), instantMovement);
-            selectedTile.tilePlacements[0] = chessPiece.gameObject;
+            PositionChessPiece(newPiece, selectedTile, newPos, true);
+            return newPiece;
         }
         else
         {
             Debug.LogError("There are two pieces on the sime tile - Position is: " + newPos.x + "-" + newPos.y);
+            return null;
         }
     }
 
-    private Vector3 GetTileCenter(GameObject curTile)
+    private void PositionChessPiece(ChessPiece chessPiece, Tile selectedTile, Vector2Int newPos, bool instantMovement = false)
     {
-        Renderer tileRender = curTile.GetComponent<Renderer>();
-        return new Vector3(tileRender.bounds.center.x, Mathf.Abs(tileRender.bounds.center.y + tileRender.bounds.center.y/2), tileRender.bounds.center.z);
+            chessPiece.pieceCoordinates = newPos;
+            chessPiece.SetPosition(GetTileCenter(selectedTile.gameObject), instantMovement);
+            selectedTile.tilePlacements[0] = chessPiece.gameObject;
     }
 
     private void CreatePiecesFromLayout(ChessPieceLayout pieceLayout)
@@ -291,6 +327,8 @@ public class Chessboard : MonoBehaviour
         }
     }
 
+
+    //TODO - REWRITE THIS BECAUSE OH YM FUCKING GOD HOLY SHIT GOD NO
     private bool IsMoveValid(ChessPiece currentPiece, Vector2Int newPos)
     {
         Tile newTile = tiles[newPos.x][newPos.y].GetComponent<Tile>();
@@ -299,7 +337,7 @@ public class Chessboard : MonoBehaviour
         {
             Vector2Int oldPos = currentPiece.pieceCoordinates;
             tiles[oldPos.x][oldPos.y].GetComponent<Tile>().tilePlacements[0] = null;
-            PositionChessPiece(currentPiece, newPos);
+            PositionChessPiece(currentPiece, newTile, newPos);
             return true;
         }
         else
@@ -319,11 +357,11 @@ public class Chessboard : MonoBehaviour
             activeChessPieces[otherPiece.teamColor].Remove(otherPiece);
             //unactiveChessPieces[otherPiece.teamColor].Add(otherPiece);
 
-            PositionChessPiece(currentPiece, newPos);
+            PositionChessPiece(currentPiece, newTile, newPos);
 
             attackingPiece = currentPiece;
             pieceToBeRemoved = otherPiece;
-            IsPieceMoving = true;
+            IsPieceAttacking = true;
 
             return true;
         }
