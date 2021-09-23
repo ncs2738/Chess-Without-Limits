@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8cf774cb15267e546aea77f4df4ad89b, type: 3}
-  m_Name: Standard Piece Layout
+  m_Name: VERTICAL PIECE LAYOUT
   m_EditorClassIdentifier: 
   chessPieceSetup:
   - piecePosition: {x: 1, y: 0}

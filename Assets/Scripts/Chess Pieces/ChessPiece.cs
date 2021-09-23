@@ -45,6 +45,14 @@ public class ChessPiece : MonoBehaviour
         }
     }
 
+    public virtual List<Vector2Int> GetAvailableMoves (ref Dictionary<int, Dictionary<int, GameObject>> tiles)
+    {
+        List<Vector2Int> moves = new List<Vector2Int>();
+        moves.Add(new Vector2Int(4, 4));
+        moves.Add(new Vector2Int(4, 3));
+        return moves;
+    }
+
     public virtual void SetPosition(Vector3 newPosition, bool instantUpdate = false)
     {
         desiredPosition = newPosition;

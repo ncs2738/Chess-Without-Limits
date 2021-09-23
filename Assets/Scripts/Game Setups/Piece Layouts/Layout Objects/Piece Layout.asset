@@ -1,0 +1,111 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf774cb15267e546aea77f4df4ad89b, type: 3}
+  m_Name: Piece Layout
+  m_EditorClassIdentifier: 
+  chessPieceSetup:
+  - piecePosition: {x: 0, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 1, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 2, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 3, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 4, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 5, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 6, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 7, y: 1}
+    chessPieceType: 1
+    teamColor: 1
+  - piecePosition: {x: 7, y: 0}
+    chessPieceType: 2
+    teamColor: 1
+  - piecePosition: {x: 6, y: 0}
+    chessPieceType: 4
+    teamColor: 1
+  - piecePosition: {x: 5, y: 0}
+    chessPieceType: 3
+    teamColor: 1
+  - piecePosition: {x: 4, y: 0}
+    chessPieceType: 6
+    teamColor: 1
+  - piecePosition: {x: 3, y: 0}
+    chessPieceType: 5
+    teamColor: 1
+  - piecePosition: {x: 2, y: 0}
+    chessPieceType: 3
+    teamColor: 1
+  - piecePosition: {x: 1, y: 0}
+    chessPieceType: 4
+    teamColor: 1
+  - piecePosition: {x: 0, y: 0}
+    chessPieceType: 2
+    teamColor: 1
+  - piecePosition: {x: 7, y: 7}
+    chessPieceType: 2
+    teamColor: 2
+  - piecePosition: {x: 6, y: 7}
+    chessPieceType: 4
+    teamColor: 2
+  - piecePosition: {x: 5, y: 7}
+    chessPieceType: 3
+    teamColor: 2
+  - piecePosition: {x: 4, y: 7}
+    chessPieceType: 5
+    teamColor: 2
+  - piecePosition: {x: 3, y: 7}
+    chessPieceType: 6
+    teamColor: 2
+  - piecePosition: {x: 2, y: 7}
+    chessPieceType: 3
+    teamColor: 2
+  - piecePosition: {x: 1, y: 7}
+    chessPieceType: 4
+    teamColor: 2
+  - piecePosition: {x: 0, y: 7}
+    chessPieceType: 2
+    teamColor: 2
+  - piecePosition: {x: 0, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 1, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 2, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 3, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 4, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 5, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 6, y: 6}
+    chessPieceType: 1
+    teamColor: 2
+  - piecePosition: {x: 7, y: 6}
+    chessPieceType: 1
+    teamColor: 2

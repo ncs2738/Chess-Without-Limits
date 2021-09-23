@@ -41,6 +41,8 @@ public class Chessboard : MonoBehaviour
 
     private bool IsPieceAttacking = false;
 
+    private List<Vector2Int> availableMoves = new List<Vector2Int>();
+
 
     private void Awake()
     {
@@ -96,8 +98,11 @@ public class Chessboard : MonoBehaviour
             //If we've been hovering over the board & have a "last-hovered tile"
             if (currentHoveredTile != hitPos)
             {
-                //Reset the currently hovered tile's material
-                tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                if (!ContainsValidMove(ref availableMoves, currentHoveredTile))
+                {
+                    //Reset it's hovered-over material back to it's default color
+                    tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                }
                 //Update the current hovered tile
                 currentHoveredTile = hitPos;
                 //Set it's material to being highlighted
@@ -135,6 +140,12 @@ public class Chessboard : MonoBehaviour
                                 //Highlight the piece's possible moves?
                                 currentlyDragged = tempPiece;
                             }
+
+                            //Get the list of available moves for the piece
+                            availableMoves = currentlyDragged.GetAvailableMoves(ref tiles);
+
+                            //WORKING HERE
+                            HighlightTiles();
                         }
                     }
                 }
@@ -157,6 +168,9 @@ public class Chessboard : MonoBehaviour
 
                     //set the currently dragged piece to null.
                     currentlyDragged = null;
+
+                    //Clear the highlighted tiles
+                    ClearHighlightedTiles();
                 }
             }
         }
@@ -167,8 +181,11 @@ public class Chessboard : MonoBehaviour
             //If we have a currently dragged tile....
             if (currentHoveredTile != -Vector2Int.one)
             {
-                //Reset it's hovered-over material back to it's default color
-                tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                if(!ContainsValidMove(ref availableMoves, currentHoveredTile))
+                {
+                    //Reset it's hovered-over material back to it's default color
+                    tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                }
                 //Set our currently hovered tile to nothing.
                 currentHoveredTile = -Vector2Int.one;
             }
@@ -182,6 +199,9 @@ public class Chessboard : MonoBehaviour
                 currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
                 //set the currently dragged piece to null.
                 currentlyDragged = null;
+
+                //Clear the highlighted tiles
+                ClearHighlightedTiles();
             }
         }
 
@@ -257,6 +277,24 @@ public class Chessboard : MonoBehaviour
         return new Vector3(tileRender.bounds.center.x, yOffset, tileRender.bounds.center.z);
     }
 
+    private void HighlightTiles()
+    {
+        for (int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x][availableMoves[i].y].GetComponent<Renderer>().material = HighlightedTileMaterial;
+        }
+    }
+
+    private void ClearHighlightedTiles()
+    {
+        for (int i = 0; i < availableMoves.Count; i++)
+        {
+            tiles[availableMoves[i].x][availableMoves[i].y].GetComponent<Tile>().ResetTileColor();
+        }
+
+        availableMoves.Clear();
+    }
+
     private void GenerateSquareBoard(int rowTiles, int columnTiles)
     {
         tiles = new Dictionary<int, Dictionary<int, GameObject>>();
@@ -327,11 +365,30 @@ public class Chessboard : MonoBehaviour
         }
     }
 
+    //OPERATION FUNCTIONS
+    private bool ContainsValidMove(ref List<Vector2Int> moves, Vector2 pos)
+    {
+        for (int i = 0;  i < moves.Count; i++)
+        {
+            if(moves[i].x == pos.x && moves[i].y == pos.y)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     //TODO - REWRITE THIS BECAUSE OH YM FUCKING GOD HOLY SHIT GOD NO
     private bool IsMoveValid(ChessPiece currentPiece, Vector2Int newPos)
     {
+        if (!ContainsValidMove(ref availableMoves, newPos))
+        {
+            return false;
+        }
+
         Tile newTile = tiles[newPos.x][newPos.y].GetComponent<Tile>();
+
         //Check if there's no other piece at that tile
         if (newTile.tilePlacements[0] == null)
         {
