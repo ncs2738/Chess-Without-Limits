@@ -32,6 +32,8 @@ public class ChessPiece : MonoBehaviour
     private Vector3 desiredPosition;
     private Vector3 desiredScale = Vector3.one;
 
+    protected bool isInitiated = false;
+
     private void Update()
     {
         if(transform.position != desiredPosition)
@@ -71,5 +73,15 @@ public class ChessPiece : MonoBehaviour
         {
             transform.position = desiredPosition;
         }
+    }
+
+    public bool IsInitiated()
+    {
+        return isInitiated;
+    }
+
+    public void SetInitiatedStatus()
+    {
+        isInitiated = true;
     }
 }

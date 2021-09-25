@@ -165,12 +165,22 @@ public class Chessboard : MonoBehaviour
                         //Move the piece back to it's last position
                         currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
                     }
+                    //The move was valid!
+                    else
+                    {
+                        //Check if the piece has been inidiated or not...
+                        //if(!currentlyDragged.IsInitiated())
+                        {
+                            //It wasn't, so intiate it!
+                        //    currentlyDragged.SetInitiatedStatus();
+                        }
 
-                    //set the currently dragged piece to null.
-                    currentlyDragged = null;
+                        //set the currently dragged piece to null.
+                        currentlyDragged = null;
 
-                    //Clear the highlighted tiles
-                    ClearHighlightedTiles();
+                        //Clear the highlighted tiles
+                        ClearHighlightedTiles();
+                    }
                 }
             }
         }
@@ -305,9 +315,39 @@ public class Chessboard : MonoBehaviour
 
             for(int j = 0; j < columnTiles; j++)
             {
-                tiles[i][j] = GenerateSingleTile(i, j);
+                if (i == 0)
+                {
+                    if (j != 2 && j != 3 && j != 5)
+                    //if (j >= 2 || j <= 5)
+                    {
+                        tiles[i][j] = GenerateSingleTile(i, j);
+                    }
+                }
+                else if(i == 5 || i == 4)
+                {
+                    if(j != 3 && j != 4)
+                    {
+                        tiles[i][j] = GenerateSingleTile(i, j);
+                    }
+                }
+                else
+                {
+                    tiles[i][j] = GenerateSingleTile(i, j);
+                }
             }
         }
+
+        
+        //tiles[8] = new Dictionary<int, GameObject>();
+       // tiles[8][6] = GenerateSingleTile(8, 6);
+        //tiles[8][5] = GenerateSingleTile(8, 5);
+        //tiles[8][4] = GenerateSingleTile(8, 4);
+
+  //      tiles[8][2] = GenerateSingleTile(8, 2);
+//        tiles[8][1] = GenerateSingleTile(8, 1);
+       // tiles[8][0] = GenerateSingleTile(8, 0);
+        
+       // tiles[7][8] = GenerateSingleTile(7, 8);
     }
 
     //CHESS PIECE FUNCTIONS

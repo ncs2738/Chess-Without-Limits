@@ -15,81 +15,102 @@ public class Pawn : ChessPiece
         //MOVING PAWN 1 TILE AHEAD
 
         //First check if the tile directly in front of the pawn EXISTS
-        if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction])
+        if (tiles[pieceCoordinates.x].ContainsKey(pieceCoordinates.y + direction))
         {
             //next check if the tile directly in front of the pawn is open
             if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
             {
-
                 moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + direction));
+
+                // if(!isInitiated)
+                {
+                    //    InitiatingMove(ref tiles, ref direction, moves);
+                }
             }
             else
             {
                 Debug.LogError("Piece in front of the pawn.");
             }
         }
+        //the block in front of it didn't exist so...
         else
         {
-            Debug.LogError("PROBLEM WITH PAWN MOVEMENT - TILE IN FRONT OF IT DID NOT EXIST");
-        }
+            //need better way to check for these things...
 
-        //INITIATING MOVE - LETS PAWN MOVE 2 TILES
-        //TODO - ADD INITIATED VARIABLE
-        //TODO - MERGE WITH ONE IN FRONT?
-        //First check if the tile directly in front of the pawn EXISTS
-        if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction])
-        {
-            //next check if the tile directly in front of the pawn is open
-            if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
+            if (tiles.ContainsKey(pieceCoordinates.x + 1))
             {
-                //OH MY GOD REWRITE THESE HOLY HEL
-
-                //white team
-                if(direction == 1 && pieceCoordinates.y == 1 && tiles[pieceCoordinates.x][pieceCoordinates.y + (direction * 2)].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
                 {
-                    moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + (direction * 2)));
+                    moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y));
                 }
 
-                //black team
-                if (direction == -1 && pieceCoordinates.y == 6 && tiles[pieceCoordinates.x][pieceCoordinates.y + (direction * 2)].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
                 {
-                    moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + (direction * 2)));
+                    moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y + direction));
+                }
+            }
+
+            if (tiles.ContainsKey(pieceCoordinates.x - 1))
+            {
+                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y));
                 }
 
+                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y + direction));
+                }
             }
-            else
-            {
-                Debug.LogError("Piece in front of the pawn when initiating.");
-            }
-        }
-        else
-        {
-            Debug.LogError("PROBLEM WITH PAWN MOVEMENT - TILE IN FRONT OF IT DID NOT EXIST - INITIATING MOVE");
+
+            //Debug.LogError("PROBLEM WITH PAWN MOVEMENT - TILE IN FRONT OF IT DID NOT EXIST");
         }
 
         //KILL MOVE
         //TODO - REWRITE TO WORK WITH PILLARS
 
-        //check if we're not at the right end of the board
-        if(pieceCoordinates.x != tiles.Count - 1)
+        //Check if there are still tiles to the right of the piece
+        if (tiles.ContainsKey(pieceCoordinates.x + 1))
         {
-            //OH GOD OH GOD REWRITE OH GOD
-            if(tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+            if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y + direction))
             {
-                moves.Add(new Vector2Int(pieceCoordinates.x + 1,pieceCoordinates.y + direction));
+                //OH GOD OH GOD REWRITE OH GOD
+                if (tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y + direction));
+                }
             }
         }
 
         //check if we're not at the left end of the board
-        if(pieceCoordinates.x != 0)
+        if (tiles.ContainsKey(pieceCoordinates.x - 1))
         {
-            if (tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+            if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y + direction))
             {
-                moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y + direction));
+                if (tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y + direction));
+                }
             }
         }
 
-
         return moves;
+    }
+
+    //INITIATING MOVE - LETS PAWN MOVE 2 TILES
+    private void InitiatingMove(ref Dictionary<int, Dictionary<int, GameObject>> tiles, ref int direction, List<Vector2Int> moves)
+    {
+        if (tiles[pieceCoordinates.x].ContainsKey(pieceCoordinates.y + (direction * 2)))
+        {
+            //check if the tile directly in front of the pawn is open
+            if (tiles[pieceCoordinates.x][pieceCoordinates.y + (direction * 2)].GetComponent<Tile>().tilePlacements[0] == null)
+            {
+                moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + (direction * 2)));
+            }
+        }
+        else
+        {
+            Debug.LogError("Piece in front of the pawn when initiating.");
+        }
     }
 }

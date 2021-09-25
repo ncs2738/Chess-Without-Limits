@@ -1,5 +1,117 @@
+using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Rook : ChessPiece
 {
+    public override List<Vector2Int> GetAvailableMoves(ref Dictionary<int, Dictionary<int, GameObject>> tiles)
+    {
+        List<Vector2Int> moves = new List<Vector2Int>();    
+
+        //VERTICAL MOVEMENTS
+
+        //check for moves going  down the board
+        for(int i = pieceCoordinates.y - 1; i >= 0 ; i--)
+        {
+            //check if exists
+            if (tiles[pieceCoordinates.x].ContainsKey(i))
+            {
+                if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x, i));
+                }
+                else
+                {
+                    if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    {
+                        moves.Add(new Vector2Int(pieceCoordinates.x, i));
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        //check for moves going up the board
+        for (int i = pieceCoordinates.y + 1; i <= tiles[pieceCoordinates.x].Keys.Max(); i++)
+        {
+            if (tiles[pieceCoordinates.x].ContainsKey(i))
+            {
+                if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(pieceCoordinates.x, i));
+                }
+
+                else
+                {
+                    if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    {
+                        moves.Add(new Vector2Int(pieceCoordinates.x, i));
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        //HORIZONTAL MOVEMENTS
+
+        //Check for moves moving left through the board
+        for (int i = pieceCoordinates.x - 1; i >= 0; i--)
+        {
+            //check if exists
+            if (tiles[i].ContainsKey(pieceCoordinates.y))
+            {
+                if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(i, pieceCoordinates.y));
+                }
+                else
+                {
+                    if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    {
+                        moves.Add(new Vector2Int(i, pieceCoordinates.y));
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        //Check for moves moving rigt through the board
+        for (int i = pieceCoordinates.x + 1; i < tiles.Count; i++)
+        {
+            //check if exists
+            if (tiles[i].ContainsKey(pieceCoordinates.y))
+            {
+                if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                {
+                    moves.Add(new Vector2Int(i, pieceCoordinates.y));
+                }
+                else
+                {
+                    if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    {
+                        moves.Add(new Vector2Int(i, pieceCoordinates.y));
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return moves;
+    }
 }
