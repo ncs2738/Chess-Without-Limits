@@ -22,7 +22,7 @@ public enum TeamColor
 }
 
 
-public class ChessPiece : MonoBehaviour
+public class ChessPiece : BoardObject
 {
     public TeamColor teamColor;
     //TODO - REWRITE THIS TO A DICTIONARY REF
@@ -34,6 +34,12 @@ public class ChessPiece : MonoBehaviour
 
     protected bool isInitiated = false;
 
+    private void Start()
+    {
+        Vector3 pieceRotation = teamColor.Equals(TeamColor.White) ? Vector3.zero : new Vector3(0, 180, 0);
+        transform.rotation = Quaternion.Euler(pieceRotation);
+    }
+
     private void Update()
     {
         if(transform.position != desiredPosition)
@@ -41,13 +47,15 @@ public class ChessPiece : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * 10);
         }
 
-       // if (transform.localScale != desiredScale)
+        /*
+        if (transform.localScale != desiredScale)
         {
-            //transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
+            transform.localScale = Vector3.Lerp(transform.localScale, desiredScale, Time.deltaTime * 10);
         }
+        */
     }
 
-    public virtual List<Vector2Int> GetAvailableMoves (ref Dictionary<int, Dictionary<int, GameObject>> tiles)
+    public virtual List<Vector2Int> GetAvailableMoves (ref Dictionary<int, Dictionary<int, Tile>> tiles)
     {
         List<Vector2Int> moves = new List<Vector2Int>();
         moves.Add(new Vector2Int(4, 4));

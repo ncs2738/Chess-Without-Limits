@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Tile : MonoBehaviour
+public class Tile : BoardObject
 {
     [SerializeField]
     private int rowIndex;
@@ -14,12 +14,12 @@ public class Tile : MonoBehaviour
 
     //will hold 4 objects - null, chesspiece, tile, boarder 
     [SerializeField]
-    public List<GameObject> tilePlacements = new List<GameObject>();
+    public List<MappedTileValue> tilePlacements = new List<MappedTileValue>();
 
     public void Awake()
     {
         //TODO: CHANGE THIS TO 5 ADDITIONS
-        tilePlacements.Add(null);
+        tilePlacements.Add(new MappedTileValue(MappedTileType.Empty, null));
     }
 
 
@@ -51,5 +51,20 @@ public class Tile : MonoBehaviour
     public Material GetTileColor()
     {
         return tileColor;
+    }
+
+    public bool CanPieceAttack(int placementIndex, TeamColor teamColor)
+    {
+        if (tilePlacements[placementIndex].Contains(MappedTileType.ChessPiece) && GetPieceType(placementIndex).teamColor != teamColor)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private ChessPiece GetPieceType(int placementIndex)
+    {
+        return tilePlacements[placementIndex].GetMappedClass() as ChessPiece;
     }
 }

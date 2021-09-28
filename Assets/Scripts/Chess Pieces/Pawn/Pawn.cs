@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Pawn : ChessPiece
 {
-    public override List<Vector2Int> GetAvailableMoves(ref Dictionary<int, Dictionary<int, GameObject>> tiles)
+    public override List<Vector2Int> GetAvailableMoves(ref Dictionary<int, Dictionary<int, Tile>> tiles)
     {
         //TODO - REWORK THIS TO WORK WITH 3 PLAYERS
         int direction = teamColor == TeamColor.White ? 1 : -1;
@@ -18,13 +18,13 @@ public class Pawn : ChessPiece
         if (tiles[pieceCoordinates.x].ContainsKey(pieceCoordinates.y + direction))
         {
             //next check if the tile directly in front of the pawn is open
-            if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
+            if (tiles[pieceCoordinates.x][pieceCoordinates.y + direction].tilePlacements[0].Contains(MappedTileType.Empty))
             {
                 moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + direction));
 
-                // if(!isInitiated)
+                if(!isInitiated)
                 {
-                    //    InitiatingMove(ref tiles, ref direction, moves);
+                    InitiatingMove(ref tiles, ref direction, moves);
                 }
             }
             else
@@ -35,29 +35,29 @@ public class Pawn : ChessPiece
         //the block in front of it didn't exist so...
         else
         {
-            //need better way to check for these things...
-
+            //Check if the tiles to the right of it are empty...
             if (tiles.ContainsKey(pieceCoordinates.x + 1))
             {
-                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y));
                 }
 
-                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y + direction));
                 }
             }
 
+            //Check if the tiles to the left of it are empty...
             if (tiles.ContainsKey(pieceCoordinates.x - 1))
             {
-                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y));
                 }
 
-                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y + direction) && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y + direction));
                 }
@@ -75,7 +75,7 @@ public class Pawn : ChessPiece
             if (tiles[pieceCoordinates.x + 1].ContainsKey(pieceCoordinates.y + direction))
             {
                 //OH GOD OH GOD REWRITE OH GOD
-                if (tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                if (tiles[pieceCoordinates.x + 1][pieceCoordinates.y + direction].CanPieceAttack(0, teamColor))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x + 1, pieceCoordinates.y + direction));
                 }
@@ -87,7 +87,7 @@ public class Pawn : ChessPiece
         {
             if (tiles[pieceCoordinates.x - 1].ContainsKey(pieceCoordinates.y + direction))
             {
-                if (tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0] != null && tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                if (tiles[pieceCoordinates.x - 1][pieceCoordinates.y + direction].CanPieceAttack(0, teamColor))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x - 1, pieceCoordinates.y + direction));
                 }
@@ -98,12 +98,12 @@ public class Pawn : ChessPiece
     }
 
     //INITIATING MOVE - LETS PAWN MOVE 2 TILES
-    private void InitiatingMove(ref Dictionary<int, Dictionary<int, GameObject>> tiles, ref int direction, List<Vector2Int> moves)
+    private void InitiatingMove(ref Dictionary<int, Dictionary<int, Tile>> tiles, ref int direction, List<Vector2Int> moves)
     {
         if (tiles[pieceCoordinates.x].ContainsKey(pieceCoordinates.y + (direction * 2)))
         {
             //check if the tile directly in front of the pawn is open
-            if (tiles[pieceCoordinates.x][pieceCoordinates.y + (direction * 2)].GetComponent<Tile>().tilePlacements[0] == null)
+            if (tiles[pieceCoordinates.x][pieceCoordinates.y + (direction * 2)].tilePlacements[0].Contains(MappedTileType.Empty))
             {
                 moves.Add(new Vector2Int(pieceCoordinates.x, pieceCoordinates.y + (direction * 2)));
             }

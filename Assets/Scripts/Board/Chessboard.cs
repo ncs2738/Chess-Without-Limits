@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Chessboard : MonoBehaviour
 {
@@ -21,7 +23,7 @@ public class Chessboard : MonoBehaviour
     public Material[] TeamMaterials;
     public GameObject[] Prefabs;
 
-    private Dictionary<int, Dictionary<int, GameObject>> tiles;
+    private Dictionary<int, Dictionary<int, Tile>> tiles;
 
     private Camera currentCamera;
 
@@ -43,9 +45,26 @@ public class Chessboard : MonoBehaviour
 
     private List<Vector2Int> availableMoves = new List<Vector2Int>();
 
+    private List<TeamColor> PlayerTurnQueue = new List<TeamColor>();
+    private TeamColor activePlayer;
+    private int currentTurnIndex = -1;
+
+    private bool isGameOver = false;
+
+    [SerializeField]
+    private GameObject victoryScreen;
+    [SerializeField]
+    private Text victoryText; 
+
 
     private void Awake()
     {
+        //Add all active players to turn queue
+        PlayerTurnQueue.Add(TeamColor.White);
+        PlayerTurnQueue.Add(TeamColor.Black);
+
+        EndPlayerTurn();
+
         //On startup, generate our board - for now, it's just a simple 8x8 board
         GenerateSquareBoard(rows, columns);
         //Then read in & spawn the pieces based off of the chess-piece layout script given
@@ -54,6 +73,11 @@ public class Chessboard : MonoBehaviour
 
     private void Update()
     {
+        if(isGameOver)
+        {
+            return;
+        }
+
         //If we don't have a camera selected...
         if(!currentCamera)
         {
@@ -73,6 +97,7 @@ public class Chessboard : MonoBehaviour
             GameObject hoveredTile = raycast.transform.gameObject;
             Debug.Log(hoveredTile);
             Tile t = hoveredTile.GetComponent<Tile>();
+            Debug.Log(t.tilePlacements[0].GetMappedType());
             Vector2Int hitPos;
 
             //SAFE-KEEPING: Make sure we're hovering over a tile.
@@ -92,7 +117,7 @@ public class Chessboard : MonoBehaviour
                 //Set the current hovered tile to it
                 currentHoveredTile = hitPos;
                 //Set the tile's material to being highlighted
-                tiles[hitPos.x][hitPos.y].GetComponent<Renderer>().material = HighlightedTileMaterial;
+                tiles[hitPos.x][hitPos.y].gameObject.GetComponent<Renderer>().material = HighlightedTileMaterial;
             }
 
             //If we've been hovering over the board & have a "last-hovered tile"
@@ -101,12 +126,12 @@ public class Chessboard : MonoBehaviour
                 if (!ContainsValidMove(ref availableMoves, currentHoveredTile))
                 {
                     //Reset it's hovered-over material back to it's default color
-                    tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                    tiles[currentHoveredTile.x][currentHoveredTile.y].ResetTileColor();
                 }
                 //Update the current hovered tile
                 currentHoveredTile = hitPos;
                 //Set it's material to being highlighted
-                tiles[hitPos.x][hitPos.y].GetComponent<Renderer>().material = HighlightedTileMaterial;
+                tiles[hitPos.x][hitPos.y].gameObject.GetComponent<Renderer>().material = HighlightedTileMaterial;
             }
 
             //If there's no pieces moving & attacking another on the board at moment...
@@ -117,36 +142,32 @@ public class Chessboard : MonoBehaviour
                 //If we just left-clicked on a tile...
                 if (Input.GetMouseButtonDown(0))
                 {
-                    //If the currently hovered tile has something atop of it...
-                    if (t.tilePlacements[0] != null)
+                    //If the currently hovered tile has a chess piece atop of it
+                    if (t.tilePlacements[0].Contains(MappedTileType.ChessPiece))
                     {
-                        //AND the item on the tile is a chess piece...
-                        if (t.tilePlacements[0].GetComponent<ChessPiece>())
-                        {
                             //Get the chess piece...
-                            ChessPiece tempPiece = t.tilePlacements[0].GetComponent<ChessPiece>();
+                            ChessPiece tempPiece = t.tilePlacements[0].GetMappedClass() as ChessPiece;
 
                             // Is it the players piece?
                             //TODO -REWRITE THIS TO ACTUALLY TAKE PROPER CONSIDERATIONS
                             //if (tempPiece.teamColor == PlayersTeamColor)
-                            if (tempPiece.teamColor == TeamColor.Black)
+                            if (activePlayer.Equals(tempPiece.teamColor))
                             {
                                 //Select the player's piece
                                 currentlyDragged = tempPiece;
                             }
                             else
                             {
-                                //TODO: ADD THIS :0[
-                                //Highlight the piece's possible moves?
-                                currentlyDragged = tempPiece;
+                            //TODO: ADD THIS :0[
+                            //Highlight the piece's possible moves?
+                            return;
                             }
 
                             //Get the list of available moves for the piece
                             availableMoves = currentlyDragged.GetAvailableMoves(ref tiles);
 
                             //WORKING HERE
-                            HighlightTiles();
-                        }
+                            HighlightTiles();                      
                     }
                 }
 
@@ -157,30 +178,34 @@ public class Chessboard : MonoBehaviour
                     Vector2Int originalPosition = currentlyDragged.pieceCoordinates;
 
                     //Check to see if the move was valid
-                    bool isMoveValid = IsMoveValid(currentlyDragged, hitPos);
+                    bool isValidMove = IsValidMove(currentlyDragged, hitPos);
 
                     //If it wasnt...
-                    if (!isMoveValid)
+                    if (!isValidMove)
                     {
                         //Move the piece back to it's last position
-                        currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
+                        currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y].gameObject));
                     }
                     //The move was valid!
                     else
                     {
                         //Check if the piece has been inidiated or not...
-                        //if(!currentlyDragged.IsInitiated())
+                        if (!currentlyDragged.IsInitiated())
                         {
                             //It wasn't, so intiate it!
-                        //    currentlyDragged.SetInitiatedStatus();
+                            currentlyDragged.SetInitiatedStatus();
                         }
 
-                        //set the currently dragged piece to null.
-                        currentlyDragged = null;
-
-                        //Clear the highlighted tiles
-                        ClearHighlightedTiles();
+                        //End the player's turn
+                        EndPlayerTurn();
                     }
+    
+
+                    //set the currently dragged piece to null.
+                    currentlyDragged = null;
+
+                    //Clear the highlighted tiles
+                    ClearHighlightedTiles();
                 }
             }
         }
@@ -194,7 +219,7 @@ public class Chessboard : MonoBehaviour
                 if(!ContainsValidMove(ref availableMoves, currentHoveredTile))
                 {
                     //Reset it's hovered-over material back to it's default color
-                    tiles[currentHoveredTile.x][currentHoveredTile.y].GetComponent<Tile>().ResetTileColor();
+                    tiles[currentHoveredTile.x][currentHoveredTile.y].ResetTileColor();
                 }
                 //Set our currently hovered tile to nothing.
                 currentHoveredTile = -Vector2Int.one;
@@ -206,7 +231,7 @@ public class Chessboard : MonoBehaviour
                 //Grab the currently dragged pieces' starting tile's coordinates
                 Vector2Int originalPosition = currentlyDragged.pieceCoordinates;
                 //Move the piece back to it's last position
-                currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y]));
+                currentlyDragged.SetPosition(GetTileCenter(tiles[originalPosition.x][originalPosition.y].gameObject));
                 //set the currently dragged piece to null.
                 currentlyDragged = null;
 
@@ -226,6 +251,12 @@ public class Chessboard : MonoBehaviour
                 GameObject.Destroy(pieceToBeRemoved.gameObject);
                 //and finish the call.
                 IsPieceAttacking = false;
+
+                if (PlayerTurnQueue.Count == 1)
+                {
+                    isGameOver = true;
+                    DisplayVictoryScreen();
+                }
             }
         }
 
@@ -250,7 +281,7 @@ public class Chessboard : MonoBehaviour
     //COMENTED UP TILL HERE
 
     //TILE FUNCTIONS
-    private GameObject GenerateSingleTile(int rowLocation, int columnLocation)
+    private Tile GenerateSingleTile(int rowLocation, int columnLocation)
     {
         GameObject newTile = Instantiate(tile, new Vector3(rowLocation, 0, columnLocation), Quaternion.identity);
         newTile.gameObject.name = string.Format("Row: " + (rowLocation + 1) + " - Column: " + (columnLocation + 1));
@@ -276,12 +307,12 @@ public class Chessboard : MonoBehaviour
             t.SetTileVars(rowLocation, columnLocation, Material2);
         }
 
-        return newTile;
+        return t;
     }
 
     private Vector3 GetTileCenter(GameObject curTile)
     {
-        Renderer tileRender = curTile.GetComponent<Renderer>();
+        Renderer tileRender = curTile.gameObject.GetComponent<Renderer>();
         float yOffset = tileRender.bounds.center.y != 0 ? tileRender.bounds.center.y + tileRender.bounds.center.y / 2 : 0.5f;
 
         return new Vector3(tileRender.bounds.center.x, yOffset, tileRender.bounds.center.z);
@@ -291,7 +322,7 @@ public class Chessboard : MonoBehaviour
     {
         for (int i = 0; i < availableMoves.Count; i++)
         {
-            tiles[availableMoves[i].x][availableMoves[i].y].GetComponent<Renderer>().material = HighlightedTileMaterial;
+            tiles[availableMoves[i].x][availableMoves[i].y].gameObject.GetComponent<Renderer>().material = HighlightedTileMaterial;
         }
     }
 
@@ -299,7 +330,7 @@ public class Chessboard : MonoBehaviour
     {
         for (int i = 0; i < availableMoves.Count; i++)
         {
-            tiles[availableMoves[i].x][availableMoves[i].y].GetComponent<Tile>().ResetTileColor();
+            tiles[availableMoves[i].x][availableMoves[i].y].ResetTileColor();
         }
 
         availableMoves.Clear();
@@ -307,11 +338,11 @@ public class Chessboard : MonoBehaviour
 
     private void GenerateSquareBoard(int rowTiles, int columnTiles)
     {
-        tiles = new Dictionary<int, Dictionary<int, GameObject>>();
+        tiles = new Dictionary<int, Dictionary<int, Tile>>();
         
         for(int i = 0; i < rowTiles; i++)
         {
-            tiles[i] = new Dictionary<int, GameObject>();
+            tiles[i] = new Dictionary<int, Tile>();
 
             for(int j = 0; j < columnTiles; j++)
             {
@@ -338,16 +369,16 @@ public class Chessboard : MonoBehaviour
         }
 
         
-        //tiles[8] = new Dictionary<int, GameObject>();
-       // tiles[8][6] = GenerateSingleTile(8, 6);
-        //tiles[8][5] = GenerateSingleTile(8, 5);
-        //tiles[8][4] = GenerateSingleTile(8, 4);
+        tiles[8] = new Dictionary<int, Tile>();
+        tiles[8][6] = GenerateSingleTile(8, 6);
+        tiles[8][5] = GenerateSingleTile(8, 5);
+        tiles[8][4] = GenerateSingleTile(8, 4);
 
-  //      tiles[8][2] = GenerateSingleTile(8, 2);
-//        tiles[8][1] = GenerateSingleTile(8, 1);
-       // tiles[8][0] = GenerateSingleTile(8, 0);
+        tiles[8][2] = GenerateSingleTile(8, 2);
+        tiles[8][1] = GenerateSingleTile(8, 1);
+        tiles[8][0] = GenerateSingleTile(8, 0);
         
-       // tiles[7][8] = GenerateSingleTile(7, 8);
+        tiles[7][8] = GenerateSingleTile(7, 8);
     }
 
     //CHESS PIECE FUNCTIONS
@@ -366,8 +397,8 @@ public class Chessboard : MonoBehaviour
         newPiece.GetComponent<MeshRenderer>().material = TeamMaterials[(int)teamColor - 1];
 
         //activeChessPieces[chessPiece.teamColor].Find(obj => obj == chessPiece).pieceCoordinates = newPos;
-        Tile selectedTile = tiles[newPos.x][newPos.y].GetComponent<Tile>();
-        if (selectedTile.tilePlacements[0] == null)
+        Tile selectedTile = tiles[newPos.x][newPos.y];
+        if (selectedTile.tilePlacements[0].Contains(MappedTileType.Empty))
         {
             PositionChessPiece(newPiece, selectedTile, newPos, true);
             return newPiece;
@@ -383,7 +414,7 @@ public class Chessboard : MonoBehaviour
     {
             chessPiece.pieceCoordinates = newPos;
             chessPiece.SetPosition(GetTileCenter(selectedTile.gameObject), instantMovement);
-            selectedTile.tilePlacements[0] = chessPiece.gameObject;
+            selectedTile.tilePlacements[0].SetMappedValues(MappedTileType.ChessPiece, chessPiece);
     }
 
     private void CreatePiecesFromLayout(ChessPieceLayout pieceLayout)
@@ -420,27 +451,27 @@ public class Chessboard : MonoBehaviour
     }
 
     //TODO - REWRITE THIS BECAUSE OH YM FUCKING GOD HOLY SHIT GOD NO
-    private bool IsMoveValid(ChessPiece currentPiece, Vector2Int newPos)
+    private bool IsValidMove(ChessPiece currentPiece, Vector2Int newPos)
     {
         if (!ContainsValidMove(ref availableMoves, newPos))
         {
             return false;
         }
 
-        Tile newTile = tiles[newPos.x][newPos.y].GetComponent<Tile>();
+        Tile newTile = tiles[newPos.x][newPos.y];
 
         //Check if there's no other piece at that tile
-        if (newTile.tilePlacements[0] == null)
+        if (newTile.tilePlacements[0].Contains(MappedTileType.Empty))
         {
             Vector2Int oldPos = currentPiece.pieceCoordinates;
-            tiles[oldPos.x][oldPos.y].GetComponent<Tile>().tilePlacements[0] = null;
+            tiles[oldPos.x][oldPos.y].tilePlacements[0].SetMappedValues(MappedTileType.Empty, null);
             PositionChessPiece(currentPiece, newTile, newPos);
             return true;
         }
-        else
+        else if(newTile.tilePlacements[0].Contains(MappedTileType.ChessPiece))
         {
             //TODO - CLEAN UP & SAFETY NET THIS
-            ChessPiece otherPiece = newTile.tilePlacements[0].GetComponent<ChessPiece>();
+            ChessPiece otherPiece = newTile.tilePlacements[0].GetMappedClass() as ChessPiece;
 
             if (otherPiece.teamColor == currentPiece.teamColor)
             {
@@ -448,8 +479,8 @@ public class Chessboard : MonoBehaviour
             }
 
             Vector2Int oldPos = currentPiece.pieceCoordinates;
-            tiles[oldPos.x][oldPos.y].GetComponent<Tile>().tilePlacements[0] = null;
-            tiles[newPos.x][newPos.y].GetComponent<Tile>().tilePlacements[0] = null;
+            tiles[oldPos.x][oldPos.y].tilePlacements[0].SetMappedValues(MappedTileType.Empty, null);
+            tiles[newPos.x][newPos.y].tilePlacements[0].SetMappedValues(MappedTileType.Empty, null);
 
             activeChessPieces[otherPiece.teamColor].Remove(otherPiece);
             //unactiveChessPieces[otherPiece.teamColor].Add(otherPiece);
@@ -460,7 +491,55 @@ public class Chessboard : MonoBehaviour
             pieceToBeRemoved = otherPiece;
             IsPieceAttacking = true;
 
+            IsGameOver(pieceToBeRemoved.teamColor);
+
             return true;
         }
+        else
+        {
+            return false;
+        }
+    }
+
+    private void EndPlayerTurn()
+    {
+        currentTurnIndex++;
+
+        if(PlayerTurnQueue.Count > 1)
+        {
+            if (currentTurnIndex == PlayerTurnQueue.Count)
+            {
+                currentTurnIndex = 0;
+            }
+
+            activePlayer = PlayerTurnQueue[currentTurnIndex];
+        }
+    }
+
+    private void IsGameOver(TeamColor attackedTeam)
+    {
+        if(!activeChessPieces[attackedTeam].Find(pieceType => pieceType.pieceType == ChessPieceType.King))
+        {
+            PlayerTurnQueue.Remove(attackedTeam);
+        }
+    }
+
+    private void DisplayVictoryScreen()
+    {
+        victoryText.text = activePlayer.ToString() + " Wins!";
+        victoryScreen.SetActive(true);
+    }
+
+    public void OnExitButton()
+    {
+        Application.Quit();
+    }
+
+    public void OnResetButton()
+    {
+        victoryScreen.SetActive(false);
+
+        //TODO - most likely way better to manually reset things, but for now, this shall suffice.
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 
 public class Rook : ChessPiece
 {
-    public override List<Vector2Int> GetAvailableMoves(ref Dictionary<int, Dictionary<int, GameObject>> tiles)
+    public override List<Vector2Int> GetAvailableMoves(ref Dictionary<int, Dictionary<int, Tile>> tiles)
     {
         List<Vector2Int> moves = new List<Vector2Int>();    
 
@@ -16,13 +16,13 @@ public class Rook : ChessPiece
             //check if exists
             if (tiles[pieceCoordinates.x].ContainsKey(i))
             {
-                if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x][i].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x, i));
                 }
                 else
                 {
-                    if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    if (tiles[pieceCoordinates.x][i].CanPieceAttack(0, teamColor))
                     {
                         moves.Add(new Vector2Int(pieceCoordinates.x, i));
                         break;
@@ -40,14 +40,14 @@ public class Rook : ChessPiece
         {
             if (tiles[pieceCoordinates.x].ContainsKey(i))
             {
-                if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[pieceCoordinates.x][i].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(pieceCoordinates.x, i));
                 }
 
                 else
                 {
-                    if (tiles[pieceCoordinates.x][i].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    if (tiles[pieceCoordinates.x][i].CanPieceAttack(0, teamColor))
                     {
                         moves.Add(new Vector2Int(pieceCoordinates.x, i));
                         break;
@@ -68,13 +68,13 @@ public class Rook : ChessPiece
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))
             {
-                if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[i][pieceCoordinates.y].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(i, pieceCoordinates.y));
                 }
                 else
                 {
-                    if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    if (tiles[i][pieceCoordinates.y].CanPieceAttack(0, teamColor))
                     {
                         moves.Add(new Vector2Int(i, pieceCoordinates.y));
                         break;
@@ -93,13 +93,13 @@ public class Rook : ChessPiece
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))
             {
-                if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0] == null)
+                if (tiles[i][pieceCoordinates.y].tilePlacements[0].Contains(MappedTileType.Empty))
                 {
                     moves.Add(new Vector2Int(i, pieceCoordinates.y));
                 }
                 else
                 {
-                    if (tiles[i][pieceCoordinates.y].GetComponent<Tile>().tilePlacements[0].GetComponent<ChessPiece>().teamColor != teamColor)
+                    if (tiles[i][pieceCoordinates.y].CanPieceAttack(0, teamColor))
                     {
                         moves.Add(new Vector2Int(i, pieceCoordinates.y));
                         break;
