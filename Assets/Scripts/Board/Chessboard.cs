@@ -9,17 +9,13 @@ public class Chessboard : MonoBehaviour
 {
     [SerializeField]
     private GameObject tile;
-
     [SerializeField]
     private int rows;
     [SerializeField]
     private int columns;
 
-    public Material Material1;
-    public Material Material2;
-
     public Material HighlightedTileMaterial;
-
+    public Material[] TileMaterials;
     public Material[] TeamMaterials;
     public GameObject[] Prefabs;
 
@@ -37,7 +33,6 @@ public class Chessboard : MonoBehaviour
     private Dictionary<TeamColor, List<ChessPiece>> unactiveChessPieces;
 
     ChessPiece currentlyDragged;
-
     ChessPiece attackingPiece;
     ChessPiece pieceToBeRemoved;
 
@@ -54,7 +49,9 @@ public class Chessboard : MonoBehaviour
     [SerializeField]
     private GameObject victoryScreen;
     [SerializeField]
-    private Text victoryText; 
+    private Text victoryText;
+
+    public bool IsBoardSquare = true;
 
 
     private void Awake()
@@ -65,12 +62,28 @@ public class Chessboard : MonoBehaviour
 
         EndPlayerTurn();
 
-        //On startup, generate our board - for now, it's just a simple 8x8 board
-        GenerateSquareBoard(rows, columns);
+        //On startup, generate our board - can be a stock-standard square board, or be jagged & rough
+        if(IsBoardSquare)
+        {
+            GenerateSquareBoard(rows, columns);
+        }
+        else
+        {
+            GenerateJaggedBoard(rows, columns);
+        }
+
         //Then read in & spawn the pieces based off of the chess-piece layout script given
         CreatePiecesFromLayout(currentPieceLayout);
     }
 
+
+    //The following code in the update function is a modified version of Epitome's chess tutorial's code
+    /***************************************************************************************
+    *    Title:  Create an Online Chess Game - Placement Grid 
+    *    Author: Epitome
+    *    Date: Mar 30, 2021
+    *    Availability: https://www.youtube.com/watch?v=FtGy7J8XD90&list=PLmcbjnHce7SeAUFouc3X9zqXxiPbCz8Zp&index=3
+    ***************************************************************************************/
     private void Update()
     {
         if(isGameOver)
@@ -288,23 +301,13 @@ public class Chessboard : MonoBehaviour
         newTile.transform.parent = transform;
         Tile t = newTile.GetComponent<Tile>();
 
-        int flipflopper;
-        if(rowLocation % 2 == 0)
+        if(columnLocation % 2 == rowLocation % 2)
         {
-            flipflopper = 0;
+            t.SetTileVars(rowLocation, columnLocation,  TeamMaterials[0]);
         }
         else
         {
-            flipflopper = 1;
-        }
-
-        if(columnLocation % 2 == flipflopper)
-        {
-            t.SetTileVars(rowLocation, columnLocation, Material1);
-        }
-        else
-        {
-            t.SetTileVars(rowLocation, columnLocation, Material2);
+            t.SetTileVars(rowLocation, columnLocation, TeamMaterials[1]);
         }
 
         return t;
@@ -346,17 +349,32 @@ public class Chessboard : MonoBehaviour
 
             for(int j = 0; j < columnTiles; j++)
             {
+                tiles[i][j] = GenerateSingleTile(i, j);
+            }
+        }
+    }
+
+    //Used for testing
+    private void GenerateJaggedBoard(int rowTiles, int columnTiles)
+    {
+        tiles = new Dictionary<int, Dictionary<int, Tile>>();
+
+        for (int i = 0; i < rowTiles; i++)
+        {
+            tiles[i] = new Dictionary<int, Tile>();
+
+            for (int j = 0; j < columnTiles; j++)
+            {
                 if (i == 0)
                 {
                     if (j != 2 && j != 3 && j != 5)
-                    //if (j >= 2 || j <= 5)
                     {
                         tiles[i][j] = GenerateSingleTile(i, j);
                     }
                 }
-                else if(i == 5 || i == 4)
+                else if (i == 5 || i == 4)
                 {
-                    if(j != 3 && j != 4)
+                    if (j != 3 && j != 4)
                     {
                         tiles[i][j] = GenerateSingleTile(i, j);
                     }
@@ -368,7 +386,6 @@ public class Chessboard : MonoBehaviour
             }
         }
 
-        
         tiles[8] = new Dictionary<int, Tile>();
         tiles[8][6] = GenerateSingleTile(8, 6);
         tiles[8][5] = GenerateSingleTile(8, 5);
@@ -377,7 +394,7 @@ public class Chessboard : MonoBehaviour
         tiles[8][2] = GenerateSingleTile(8, 2);
         tiles[8][1] = GenerateSingleTile(8, 1);
         tiles[8][0] = GenerateSingleTile(8, 0);
-        
+
         tiles[7][8] = GenerateSingleTile(7, 8);
     }
 
@@ -386,7 +403,8 @@ public class Chessboard : MonoBehaviour
     {
         if(pieceType == 0 || teamColor == 0)
         {
-            Debug.LogError("A piece read-in wrong from the piece layout object.");
+            string errorMSG = pieceType == 0 ? "The piece type was Null" : "The piece's team color was Null";
+            Debug.LogError("A piece read-in wrong from the piece layout object - " + errorMSG);
             return null;
         }
 
@@ -450,7 +468,14 @@ public class Chessboard : MonoBehaviour
         return false;
     }
 
-    //TODO - REWRITE THIS BECAUSE OH YM FUCKING GOD HOLY SHIT GOD NO
+
+    //The following code in the IsValidMove function is a modified version of Epitome's chess tutorial's code
+    /***************************************************************************************
+    *    Title:  Create an Online Chess Game - Moving Pieces 
+    *    Author: Epitome
+    *    Date: Apr 6, 2021
+    *    Availability: https://www.youtube.com/watch?v=3kW54hU98os&list=PLmcbjnHce7SeAUFouc3X9zqXxiPbCz8Zp&index=4
+    ***************************************************************************************/
     private bool IsValidMove(ChessPiece currentPiece, Vector2Int newPos)
     {
         if (!ContainsValidMove(ref availableMoves, newPos))

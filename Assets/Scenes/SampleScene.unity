@@ -167,7 +167,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 26047852}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 
@@ -985,7 +985,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1563087316
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1064,6 +1064,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: victoryText
+      value: 
+      objectReference: {fileID: 26047854}
+    - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
+      propertyPath: victoryScreen
+      value: 
+      objectReference: {fileID: 1563087315}
     - target: {fileID: 8705233007804791320, guid: 236b7b5a48b31ba42bc91dc258b0e990, type: 3}
       propertyPath: currentPieceLayout
       value: 

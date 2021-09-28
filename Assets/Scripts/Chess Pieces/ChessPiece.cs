@@ -2,26 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum ChessPieceType
-{
-    None = 0,
-    Pawn = 1,
-    Rook = 2,
-    Bishop = 3,
-    Knight = 4,
-    Queen = 5,
-    King = 6,
-}
-
-public enum TeamColor
-{
-    None = 0,
-    White = 1,
-    Black = 2,
-    Gray = 3,
-}
-
-
 public class ChessPiece : BoardObject
 {
     public TeamColor teamColor;
