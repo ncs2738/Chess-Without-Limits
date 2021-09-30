@@ -99,6 +99,11 @@ public class Chessboard : MonoBehaviour
             return;
         }
 
+        HandleInputs();
+    }
+
+    private void HandleInputs()
+    {
         //Do a raycast check to see if the player's hovering over any tiles (and soon to be pieces)
         RaycastHit raycast;
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
@@ -148,7 +153,7 @@ public class Chessboard : MonoBehaviour
             }
 
             //If there's no pieces moving & attacking another on the board at moment...
-            if(!IsPieceAttacking)
+            if (!IsPieceAttacking)
             {
                 //Check for inputs:
 
@@ -158,29 +163,29 @@ public class Chessboard : MonoBehaviour
                     //If the currently hovered tile has a chess piece atop of it
                     if (t.tilePlacements[0].Contains(MappedTileType.ChessPiece))
                     {
-                            //Get the chess piece...
-                            ChessPiece tempPiece = t.tilePlacements[0].GetMappedClass() as ChessPiece;
+                        //Get the chess piece...
+                        ChessPiece tempPiece = t.tilePlacements[0].GetMappedClass() as ChessPiece;
 
-                            // Is it the players piece?
-                            //TODO -REWRITE THIS TO ACTUALLY TAKE PROPER CONSIDERATIONS
-                            //if (tempPiece.teamColor == PlayersTeamColor)
-                            if (activePlayer.Equals(tempPiece.teamColor))
-                            {
-                                //Select the player's piece
-                                currentlyDragged = tempPiece;
-                            }
-                            else
-                            {
+                        // Is it the players piece?
+                        //TODO -REWRITE THIS TO ACTUALLY TAKE PROPER CONSIDERATIONS
+                        //if (tempPiece.teamColor == PlayersTeamColor)
+                        if (activePlayer.Equals(tempPiece.teamColor))
+                        {
+                            //Select the player's piece
+                            currentlyDragged = tempPiece;
+                        }
+                        else
+                        {
                             //TODO: ADD THIS :0[
                             //Highlight the piece's possible moves?
                             return;
-                            }
+                        }
 
-                            //Get the list of available moves for the piece
-                            availableMoves = currentlyDragged.GetAvailableMoves(ref tiles);
+                        //Get the list of available moves for the piece
+                        availableMoves = currentlyDragged.GetAvailableMoves(ref tiles);
 
-                            //WORKING HERE
-                            HighlightTiles();                      
+                        //WORKING HERE
+                        HighlightTiles();
                     }
                 }
 
@@ -212,7 +217,7 @@ public class Chessboard : MonoBehaviour
                         //End the player's turn
                         EndPlayerTurn();
                     }
-    
+
 
                     //set the currently dragged piece to null.
                     currentlyDragged = null;
@@ -229,7 +234,7 @@ public class Chessboard : MonoBehaviour
             //If we have a currently dragged tile....
             if (currentHoveredTile != -Vector2Int.one)
             {
-                if(!ContainsValidMove(ref availableMoves, currentHoveredTile))
+                if (!ContainsValidMove(ref availableMoves, currentHoveredTile))
                 {
                     //Reset it's hovered-over material back to it's default color
                     tiles[currentHoveredTile.x][currentHoveredTile.y].ResetTileColor();
@@ -239,7 +244,7 @@ public class Chessboard : MonoBehaviour
             }
 
             //If we were dragging a piece & let go of it off the board...
-            if(currentlyDragged && Input.GetMouseButtonUp(0))
+            if (currentlyDragged && Input.GetMouseButtonUp(0))
             {
                 //Grab the currently dragged pieces' starting tile's coordinates
                 Vector2Int originalPosition = currentlyDragged.pieceCoordinates;
@@ -276,14 +281,14 @@ public class Chessboard : MonoBehaviour
         //DRAG ANIMATION
         //If we're currently dragging a chess piece...
         //TODO - PROBABLY WILL WANT TO HAVE THIS JUST FOLLOW THE MOUSE INSTEAD...
-        if(currentlyDragged)
+        if (currentlyDragged)
         {
             //Cast a plane onto the board to check for it's position
             Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * 1f);
 
             //Get it's distance from the board...
             float distance = 0.0f;
-            if(horizontalPlane.Raycast(ray, out distance))
+            if (horizontalPlane.Raycast(ray, out distance))
             {
                 //Set it's new position to the distance
                 currentlyDragged.SetPosition(ray.GetPoint(distance) + Vector3.up * 1.5f);
