@@ -4,15 +4,37 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    //public GameObject CameraPrefab;
+    public TeamColor teamColor;
+    public Camera playerCamera;
+    public CameraController cameraController;
+
+    private void Start()
     {
-        
+        // GameObject agga = CameraPrefab.gameObject.transform.GetChild(0).gameObject;
+        //playerCamera = agga.GetComponent<Camera>();
+        cameraController = playerCamera.GetComponent<CameraController>();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void SetPlayerTeam(TeamColor _teamColor)
     {
-        
+        teamColor = _teamColor;
     }
+
+    public void SetPlayerCameraPosition(int index)
+    {
+        cameraController.SetCurrentCameraPosition(index);
+    }
+
+    public Camera GetCamera()
+    {
+        return playerCamera;
+    }
+
+    /*
+    public Player(TeamColor _teamColor)
+    {
+        teamColor = _teamColor;
+    }
+    */
 }

@@ -171,5 +171,8 @@ public class CameraController : MonoBehaviour
     public void SetCurrentCameraPosition(int index)
     {
         cameraPosIndex = index;
+        cameraRotation = cameraPositions[cameraPosIndex];
+        Quaternion cameraQuaternion = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);
+        parentTransform.rotation = cameraQuaternion;
     }
 }

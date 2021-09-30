@@ -40,10 +40,6 @@ public class Chessboard : MonoBehaviour
 
     private List<Vector2Int> availableMoves = new List<Vector2Int>();
 
-    private List<TeamColor> PlayerTurnQueue = new List<TeamColor>();
-    private TeamColor activePlayer;
-    private int currentTurnIndex = -1;
-
     private bool isGameOver = false;
 
     [SerializeField]
@@ -53,15 +49,22 @@ public class Chessboard : MonoBehaviour
 
     public bool IsBoardSquare = true;
 
+    //TODO - REWRITE THESE TO BE MERGED
+    public int playerCount = 2;
+    public GameObject PlayerPrefab;
+    private List<GameObject> Players = new List<GameObject>();
+    public bool IsCouchCoOp = true;
+
+    private List<TeamColor> PlayerTurnQueue = new List<TeamColor>();
+    private TeamColor activePlayer;
+    private int currentTurnIndex = -1;
+
+    private Vector2 boardWidth;
+    private Vector2 boardLength;
+
 
     private void Awake()
     {
-        //Add all active players to turn queue
-        PlayerTurnQueue.Add(TeamColor.White);
-        PlayerTurnQueue.Add(TeamColor.Black);
-
-        EndPlayerTurn();
-
         //On startup, generate our board - can be a stock-standard square board, or be jagged & rough
         if(IsBoardSquare)
         {
@@ -72,8 +75,41 @@ public class Chessboard : MonoBehaviour
             GenerateJaggedBoard(rows, columns);
         }
 
+        //TODO - REWRITE THIS TO ACTUALLY TAKE INTO ACCOUNT MAX NUMBERS
+        boardWidth.x = 0;
+        boardLength.x = 0;
+        boardWidth.y = rows;
+        boardLength.y = columns;
+
+        AddPlayers();
+
         //Then read in & spawn the pieces based off of the chess-piece layout script given
         CreatePiecesFromLayout(currentPieceLayout);
+    }
+
+    //TODO - REWRITE THIS TO BE ACTUALLY CLEAN!
+    private void AddPlayers()
+    {
+        //Add all active players to turn queue
+        PlayerTurnQueue.Add(TeamColor.White);
+        PlayerTurnQueue.Add(TeamColor.Black);
+
+        float midX = (boardLength.y - boardLength.x) / 2;
+        float midZ = (boardWidth.y - boardWidth.x) / 2;
+
+        //for (int i = 0; i < playerCount; i++)
+        {
+            Players.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
+            Players.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
+        }
+
+        Players[0].GetComponent<Player>().SetPlayerTeam(TeamColor.White);
+        Players[0].GetComponent<Player>().SetPlayerCameraPosition(3);
+        //Players[1].GetComponent<Player>().SetPlayerTeam(TeamColor.Black);
+       // Players[1].GetComponent<Player>().SetPlayerCameraPosition(1);
+
+        //End the player's set-up turn to start the game~!
+        EndPlayerTurn();
     }
 
 
@@ -95,7 +131,8 @@ public class Chessboard : MonoBehaviour
         if(!currentCamera)
         {
             //grab the current camera
-            currentCamera = Camera.current;
+            //currentCamera = Camera.current;
+            currentCamera = Players[(int) activePlayer].GetComponent<Player>().GetCamera();
             return;
         }
 
@@ -347,8 +384,8 @@ public class Chessboard : MonoBehaviour
     private void GenerateSquareBoard(int rowTiles, int columnTiles)
     {
         tiles = new Dictionary<int, Dictionary<int, Tile>>();
-        
-        for(int i = 0; i < rowTiles; i++)
+
+        for (int i = 0; i < rowTiles; i++)
         {
             tiles[i] = new Dictionary<int, Tile>();
 
