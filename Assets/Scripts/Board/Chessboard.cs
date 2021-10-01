@@ -49,18 +49,18 @@ public class Chessboard : MonoBehaviour
 
     public bool IsBoardSquare = true;
 
-    //TODO - REWRITE THESE TO BE MERGED
-    public int playerCount = 2;
+    //Player data
     public GameObject PlayerPrefab;
-    private List<GameObject> Players = new List<GameObject>();
-    public bool IsCouchCoOp = true;
-
-    private List<TeamColor> PlayerTurnQueue = new List<TeamColor>();
+    public int PlayerCount = 2;
+    public List<GameObject> PlayerTurnQueue = new List<GameObject>();
     private TeamColor activePlayer;
     private int currentTurnIndex = -1;
+    public bool IsCouchCoOp = true;
 
     private Vector2 boardWidth;
     private Vector2 boardLength;
+
+    private Vector3 LastCameraPosition;
 
 
     private void Awake()
@@ -75,12 +75,6 @@ public class Chessboard : MonoBehaviour
             GenerateJaggedBoard(rows, columns);
         }
 
-        //TODO - REWRITE THIS TO ACTUALLY TAKE INTO ACCOUNT MAX NUMBERS
-        boardWidth.x = 0;
-        boardLength.x = 0;
-        boardWidth.y = rows;
-        boardLength.y = columns;
-
         AddPlayers();
 
         //Then read in & spawn the pieces based off of the chess-piece layout script given
@@ -90,36 +84,32 @@ public class Chessboard : MonoBehaviour
     //TODO - REWRITE THIS TO BE ACTUALLY CLEAN!
     private void AddPlayers()
     {
-        //Add all active players to turn queue
-        PlayerTurnQueue.Add(TeamColor.White);
-        PlayerTurnQueue.Add(TeamColor.Black);
+        //TODO - REWRITE THIS TO ACTUALLY TAKE INTO ACCOUNT MAX NUMBERS
+        boardWidth.x = 0;
+        boardLength.x = 0;
+        boardWidth.y = rows;
+        boardLength.y = columns;
 
         float midX = (boardLength.y - boardLength.x) / 2;
         float midZ = (boardWidth.y - boardWidth.x) / 2;
 
-        //for (int i = 0; i < playerCount; i++)
+        for (int i = 0; i < PlayerCount; i++)
         {
-            Players.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
-            Players.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
+            PlayerTurnQueue.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
         }
 
-        Players[0].GetComponent<Player>().SetPlayerTeam(TeamColor.White);
-        Players[0].GetComponent<Player>().SetPlayerCameraPosition(3);
-        //Players[1].GetComponent<Player>().SetPlayerTeam(TeamColor.Black);
-       // Players[1].GetComponent<Player>().SetPlayerCameraPosition(1);
+        PlayerTurnQueue[0].GetComponent<Player>().InitiatePlayer(TeamColor.White, this);
+        PlayerTurnQueue[1].GetComponent<Player>().InitiatePlayer(TeamColor.Black, this);
+
+        //set up cameras
+        PlayerTurnQueue[0].GetComponent<Player>().GetCamera().enabled = true;
+        PlayerTurnQueue[1].GetComponent<Player>().GetCamera().enabled = false;
+        currentCamera = PlayerTurnQueue[0].GetComponent<Player>().GetCamera();
 
         //End the player's set-up turn to start the game~!
         EndPlayerTurn();
     }
 
-
-    //The following code in the update function is a modified version of Epitome's chess tutorial's code
-    /***************************************************************************************
-    *    Title:  Create an Online Chess Game - Placement Grid 
-    *    Author: Epitome
-    *    Date: Mar 30, 2021
-    *    Availability: https://www.youtube.com/watch?v=FtGy7J8XD90&list=PLmcbjnHce7SeAUFouc3X9zqXxiPbCz8Zp&index=3
-    ***************************************************************************************/
     private void Update()
     {
         if(isGameOver)
@@ -127,18 +117,19 @@ public class Chessboard : MonoBehaviour
             return;
         }
 
-        //If we don't have a camera selected...
-        if(!currentCamera)
-        {
-            //grab the current camera
-            //currentCamera = Camera.current;
-            currentCamera = Players[(int) activePlayer].GetComponent<Player>().GetCamera();
-            return;
-        }
-
         HandleInputs();
     }
 
+
+    //The following code is a modified version of Epitome's chess tutorial's code
+    //Note - I will be HEAVILY modifying it in the future, but will be following their logic
+    /***************************************************************************************
+    *    Title:  Create an Online Chess Game - Placement Grid 
+    *    Author: Epitome
+    *    Date: Mar 30, 2021
+    *    Availability: https://www.youtube.com/watch?v=FtGy7J8XD90&list=PLmcbjnHce7SeAUFouc3X9zqXxiPbCz8Zp&index=3
+    ***************************************************************************************/
+    //TODO - Break these functions up & move most of this unto the player class; this will allow players to highlight tiles without the other seeing
     private void HandleInputs()
     {
         //Do a raycast check to see if the player's hovering over any tiles (and soon to be pieces)
@@ -150,9 +141,8 @@ public class Chessboard : MonoBehaviour
         {
             //Grab the raycast's data
             GameObject hoveredTile = raycast.transform.gameObject;
-            Debug.Log(hoveredTile);
             Tile t = hoveredTile.GetComponent<Tile>();
-            Debug.Log(t.tilePlacements[0].GetMappedType());
+           // Debug.Log(hoveredTile + " " + t.tilePlacements[0].GetMappedType());
             Vector2Int hitPos;
 
             //SAFE-KEEPING: Make sure we're hovering over a tile.
@@ -570,7 +560,9 @@ public class Chessboard : MonoBehaviour
 
     private void EndPlayerTurn()
     {
-        currentTurnIndex++;
+       int curPlayer = currentTurnIndex >= 0 ? (int)activePlayer - 1 : 0;
+       LastCameraPosition = PlayerTurnQueue[curPlayer].GetComponent<Player>().GetCameraRotation();
+       currentTurnIndex++;
 
         if(PlayerTurnQueue.Count > 1)
         {
@@ -579,7 +571,8 @@ public class Chessboard : MonoBehaviour
                 currentTurnIndex = 0;
             }
 
-            activePlayer = PlayerTurnQueue[currentTurnIndex];
+            activePlayer = PlayerTurnQueue[currentTurnIndex].GetComponent<Player>().GetPlayerTeamColor();
+            UpdatePlayerCameras();
         }
     }
 
@@ -587,7 +580,9 @@ public class Chessboard : MonoBehaviour
     {
         if(!activeChessPieces[attackedTeam].Find(pieceType => pieceType.pieceType == ChessPieceType.King))
         {
-            PlayerTurnQueue.Remove(attackedTeam);
+            //todo - rewrite this to be not gross.
+            GameObject removedPlayer = PlayerTurnQueue.Find(player => player.GetComponent<Player>().GetPlayerTeamColor() == attackedTeam);
+            PlayerTurnQueue.Remove(removedPlayer);
         }
     }
 
@@ -608,5 +603,29 @@ public class Chessboard : MonoBehaviour
 
         //TODO - most likely way better to manually reset things, but for now, this shall suffice.
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public TeamColor GetActivePlayer()
+    {
+        return activePlayer;
+    }
+
+    private void UpdatePlayerCameras()
+    {
+        int curPlayerIndex = (int)activePlayer - 1;
+
+        for (int i = 0; i < PlayerTurnQueue.Count; i++)
+        {
+            if (i != currentTurnIndex)
+            {
+                PlayerTurnQueue[i].GetComponent<Player>().GetCamera().enabled = false;
+            }
+
+            PlayerTurnQueue[i].GetComponent<Player>().SetCameraPosition(LastCameraPosition);
+        }
+
+        PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().GetCamera().enabled = true;
+        PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().SetPlayerCameraIndex(curPlayerIndex, true);
+        currentCamera = PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().GetCamera();
     }
 }

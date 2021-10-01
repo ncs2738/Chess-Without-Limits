@@ -48,7 +48,12 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private float ScrollDampening = 6f;
 
-    private void Start()
+    private float animationTime;
+
+    [SerializeField]
+    private bool isCameraActive;
+
+    private void Awake()
     {
         cameraTransform = this.transform;
         parentTransform = this.transform.parent;
@@ -65,9 +70,15 @@ public class CameraController : MonoBehaviour
 
     private void HandleMovementInput()
     {
+        if(!isCameraActive)
+        {
+            return;
+        }
+
         //Check for if the player presses up on  Q, E, or space & swap to a new fixed camera position
         if (Input.GetKeyUp(KeyCode.Q))
         {
+            animationTime = OrbitDampening;
             cameraPosIndex--;
             if (cameraPosIndex < 0)
             {
@@ -83,6 +94,7 @@ public class CameraController : MonoBehaviour
         //If the player releases the space-button or E key, change the camera's current position
         if (Input.GetKeyUp(KeyCode.Space) || Input.GetKeyUp(KeyCode.E))
         {
+            animationTime = OrbitDampening;
             cameraPosIndex++;
             if (cameraPosIndex >= cameraPositions.Length)
             {
@@ -157,8 +169,9 @@ public class CameraController : MonoBehaviour
     {
         //Get the new camera's angle
         Quaternion cameraQuaternion = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);
+
         //set the parent's new rotation & animate to it using a Lerp
-        parentTransform.rotation = Quaternion.Lerp(parentTransform.rotation, cameraQuaternion, Time.deltaTime * OrbitDampening);
+        parentTransform.rotation = Quaternion.Lerp(parentTransform.rotation, cameraQuaternion, animationTime * Time.deltaTime);
 
         //Check if we've zoomed at all
         if (cameraTransform.localPosition.z != cameraDistance * -1f)
@@ -168,11 +181,38 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    public void SetCurrentCameraPosition(int index)
+    public void SetCurrentCameraIndex(int index, bool halfSpeed)
     {
-        cameraPosIndex = index;
+        if (cameraPosIndex < 0 || cameraPosIndex >= cameraPositions.Length)
+        {
+            cameraPosIndex = 0;
+        }
+        else
+        {
+            cameraPosIndex = index;
+        }
+
         cameraRotation = cameraPositions[cameraPosIndex];
-        Quaternion cameraQuaternion = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);
+        cameraDistance = 10f;
+        animationTime = halfSpeed ? OrbitDampening / 2: OrbitDampening;
+        UpdateCameraPosition();
+    }
+
+    public void SetCameraPositon(Vector3 newRotation)
+    {
+        cameraRotation = newRotation;
+        cameraDistance = 10f;
+        Quaternion cameraQuaternion = Quaternion.Euler(newRotation.y, newRotation.x, 0);
         parentTransform.rotation = cameraQuaternion;
+    }
+
+    public void SetCameraActiveStatus(bool activeStatus)
+    {
+        isCameraActive = activeStatus;
+    }
+
+    public Vector3 GetCameraRotation()
+    {
+        return cameraRotation;
     }
 }

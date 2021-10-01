@@ -8,22 +8,38 @@ public class Player : MonoBehaviour
     public TeamColor teamColor;
     public Camera playerCamera;
     public CameraController cameraController;
+    public Chessboard board;
 
-    private void Start()
+    private void Awake()
     {
-        // GameObject agga = CameraPrefab.gameObject.transform.GetChild(0).gameObject;
-        //playerCamera = agga.GetComponent<Camera>();
         cameraController = playerCamera.GetComponent<CameraController>();
     }
 
-    public void SetPlayerTeam(TeamColor _teamColor)
+    private void Update()
+    {
+        cameraController.SetCameraActiveStatus(teamColor.Equals(board.GetActivePlayer()));
+    }
+
+    public void InitiatePlayer(TeamColor _teamColor, Chessboard _board)
+    {
+        SetPlayerTeam(_teamColor);
+        SetPlayerCameraIndex((int) _teamColor - 1);
+        board = _board;
+    }
+
+    private void SetPlayerTeam(TeamColor _teamColor)
     {
         teamColor = _teamColor;
     }
 
-    public void SetPlayerCameraPosition(int index)
+    public TeamColor GetPlayerTeamColor()
     {
-        cameraController.SetCurrentCameraPosition(index);
+        return teamColor;
+    }
+
+    public void SetPlayerCameraIndex(int index, bool halfSpeed = false)
+    {
+        cameraController.SetCurrentCameraIndex(index, halfSpeed);
     }
 
     public Camera GetCamera()
@@ -31,10 +47,13 @@ public class Player : MonoBehaviour
         return playerCamera;
     }
 
-    /*
-    public Player(TeamColor _teamColor)
+    public Vector3 GetCameraRotation()
     {
-        teamColor = _teamColor;
+        return cameraController.GetCameraRotation();
     }
-    */
+
+    public void SetCameraPosition(Vector3 newPosition)
+    {
+        cameraController.SetCameraPositon(newPosition);
+    }
 }
