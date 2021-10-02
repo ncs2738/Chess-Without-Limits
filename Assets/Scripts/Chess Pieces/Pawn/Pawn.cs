@@ -29,7 +29,7 @@ public class Pawn : ChessPiece
             }
             else
             {
-                Debug.LogError("Piece in front of the pawn.");
+               // Debug.LogError("Piece in front of the pawn.");
             }
         }
         //the block in front of it didn't exist so...
@@ -110,7 +110,7 @@ public class Pawn : ChessPiece
         }
         else
         {
-            Debug.LogError("Piece in front of the pawn when initiating.");
+            //Debug.LogError("Piece in front of the pawn when initiating.");
         }
     }
 }

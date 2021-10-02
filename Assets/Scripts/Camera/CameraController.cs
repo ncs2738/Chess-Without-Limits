@@ -108,7 +108,7 @@ public class CameraController : MonoBehaviour
         }
 
         //Check for shift-key input to speed up our camera movement speed
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
         {
             cameraPanSpeed = fastMovementSpeed;
         }
@@ -194,7 +194,7 @@ public class CameraController : MonoBehaviour
 
         cameraRotation = cameraPositions[cameraPosIndex];
         cameraDistance = 10f;
-        animationTime = halfSpeed ? OrbitDampening / 2: OrbitDampening;
+        animationTime = halfSpeed ? OrbitDampening / 4: OrbitDampening;
         UpdateCameraPosition();
     }
 

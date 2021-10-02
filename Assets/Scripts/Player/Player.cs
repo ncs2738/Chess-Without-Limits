@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    //public GameObject CameraPrefab;
     public TeamColor teamColor;
     public Camera playerCamera;
     public CameraController cameraController;

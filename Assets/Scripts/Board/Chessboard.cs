@@ -21,6 +21,8 @@ public class Chessboard : MonoBehaviour
 
     private Dictionary<int, Dictionary<int, Tile>> tiles;
 
+    //Used for the audio componenet - nothing more!
+    public Camera SceneCamera;
     private Camera currentCamera;
 
     private Vector2Int currentHoveredTile;
@@ -52,7 +54,8 @@ public class Chessboard : MonoBehaviour
     //Player data
     public GameObject PlayerPrefab;
     public int PlayerCount = 2;
-    public List<GameObject> PlayerTurnQueue = new List<GameObject>();
+    public List<GameObject> PlayerList = new List<GameObject>();
+    public List<Player> PlayerTurnQueue = new List<Player>();
     private TeamColor activePlayer;
     private int currentTurnIndex = -1;
     public bool IsCouchCoOp = true;
@@ -62,11 +65,15 @@ public class Chessboard : MonoBehaviour
 
     private Vector3 LastCameraPosition;
 
+    private bool displayGui = true;
+
 
     private void Awake()
     {
+        SceneCamera.enabled = false;
+
         //On startup, generate our board - can be a stock-standard square board, or be jagged & rough
-        if(IsBoardSquare)
+        if (IsBoardSquare)
         {
             GenerateSquareBoard(rows, columns);
         }
@@ -81,6 +88,64 @@ public class Chessboard : MonoBehaviour
         CreatePiecesFromLayout(currentPieceLayout);
     }
 
+    private void Update()
+    {
+        if(Input.GetKey(KeyCode.Escape))
+        {
+            OnExitButton();
+        }
+
+        if(Input.GetKeyUp(KeyCode.H))
+        {
+            displayGui = !displayGui;
+        }
+
+        if (Input.GetKeyUp(KeyCode.B))
+        {
+            if(IsBoardSquare)
+            {
+                SceneManager.LoadScene("JaggedBoard", LoadSceneMode.Single);
+            }
+            else
+            {
+                SceneManager.LoadScene("SquareBoard", LoadSceneMode.Single);
+            }
+        }
+
+        if (isGameOver)
+        {
+            return;
+        }
+
+        HandleInputs();
+    }
+
+    void OnGUI()
+    {
+       if(displayGui)
+        {
+            GUI.skin.label.fontSize = 30;
+            string instructions1 = "Use WASD to turn & rotate the camera";
+            string instructions2 = "You can also use the mouse to rotate the camera";
+            string instructions3 = "By moving it to the border of the screen you want to move in.";
+            string instructions4 = "Press Shift to speed up your movement speed";
+            string instructions5 = "Turn the GUI on & off using the H key.";
+            string instructions6 = "Press the B key to change the board type.";
+
+            string instructions7 = "Zoom in & out with the middle-mouse button or R/F keys";
+            string instructions8 = "Cycle through camera positions using the Q & E keys or the space bar";
+
+            GUI.Label(new Rect(5, 10, Screen.width, Screen.height), instructions1);
+            GUI.Label(new Rect(5, 60, Screen.width, Screen.height), instructions2);
+            GUI.Label(new Rect(5, 110, Screen.width, Screen.height), instructions3);
+            GUI.Label(new Rect(5, 160, Screen.width, Screen.height), instructions4);
+            GUI.Label(new Rect(5, 210, Screen.width, Screen.height), instructions5);
+            GUI.Label(new Rect(5, 260, Screen.width, Screen.height), instructions6);
+            GUI.Label(new Rect(5, 960, Screen.width, Screen.height), instructions7);
+            GUI.Label(new Rect(5, 1010, Screen.width, Screen.height), instructions8);
+        }
+    }
+
     //TODO - REWRITE THIS TO BE ACTUALLY CLEAN!
     private void AddPlayers()
     {
@@ -90,34 +155,25 @@ public class Chessboard : MonoBehaviour
         boardWidth.y = rows;
         boardLength.y = columns;
 
-        float midX = (boardLength.y - boardLength.x) / 2;
-        float midZ = (boardWidth.y - boardWidth.x) / 2;
+        float midX = ((boardLength.y - boardLength.x) - 1) / 2;
+        float midZ = ((boardWidth.y - boardWidth.x) - 1) / 2;
 
         for (int i = 0; i < PlayerCount; i++)
         {
-            PlayerTurnQueue.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
+            PlayerList.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
+            PlayerTurnQueue.Add(PlayerList[i].GetComponent<Player>());
         }
 
-        PlayerTurnQueue[0].GetComponent<Player>().InitiatePlayer(TeamColor.White, this);
-        PlayerTurnQueue[1].GetComponent<Player>().InitiatePlayer(TeamColor.Black, this);
+        PlayerTurnQueue[0].InitiatePlayer(TeamColor.White, this);
+        PlayerTurnQueue[1].InitiatePlayer(TeamColor.Black, this);
 
         //set up cameras
-        PlayerTurnQueue[0].GetComponent<Player>().GetCamera().enabled = true;
-        PlayerTurnQueue[1].GetComponent<Player>().GetCamera().enabled = false;
-        currentCamera = PlayerTurnQueue[0].GetComponent<Player>().GetCamera();
+        PlayerTurnQueue[0].GetCamera().enabled = true;
+        PlayerTurnQueue[1].GetCamera().enabled = false;
+        currentCamera = PlayerTurnQueue[0].GetCamera();
 
         //End the player's set-up turn to start the game~!
         EndPlayerTurn();
-    }
-
-    private void Update()
-    {
-        if(isGameOver)
-        {
-            return;
-        }
-
-        HandleInputs();
     }
 
 
@@ -560,9 +616,11 @@ public class Chessboard : MonoBehaviour
 
     private void EndPlayerTurn()
     {
-       int curPlayer = currentTurnIndex >= 0 ? (int)activePlayer - 1 : 0;
-       LastCameraPosition = PlayerTurnQueue[curPlayer].GetComponent<Player>().GetCameraRotation();
-       currentTurnIndex++;
+        //TODO - find a better way to get the last player's camera cooridanates; this is gross as hell
+        int curPlayer = (int) activePlayer - 1;
+        int lastPlayerIndex = curPlayer >= 0 && curPlayer < PlayerTurnQueue.Count ? curPlayer : 0;
+        LastCameraPosition = PlayerTurnQueue[lastPlayerIndex].GetCameraRotation();
+        currentTurnIndex++;
 
         if(PlayerTurnQueue.Count > 1)
         {
@@ -571,7 +629,7 @@ public class Chessboard : MonoBehaviour
                 currentTurnIndex = 0;
             }
 
-            activePlayer = PlayerTurnQueue[currentTurnIndex].GetComponent<Player>().GetPlayerTeamColor();
+            activePlayer = PlayerTurnQueue[currentTurnIndex].GetPlayerTeamColor();
             UpdatePlayerCameras();
         }
     }
@@ -581,8 +639,7 @@ public class Chessboard : MonoBehaviour
         if(!activeChessPieces[attackedTeam].Find(pieceType => pieceType.pieceType == ChessPieceType.King))
         {
             //todo - rewrite this to be not gross.
-            GameObject removedPlayer = PlayerTurnQueue.Find(player => player.GetComponent<Player>().GetPlayerTeamColor() == attackedTeam);
-            PlayerTurnQueue.Remove(removedPlayer);
+            PlayerTurnQueue.Remove(PlayerTurnQueue.Find(player => player.GetPlayerTeamColor() == attackedTeam));
         }
     }
 
@@ -618,14 +675,14 @@ public class Chessboard : MonoBehaviour
         {
             if (i != currentTurnIndex)
             {
-                PlayerTurnQueue[i].GetComponent<Player>().GetCamera().enabled = false;
+                PlayerTurnQueue[i].GetCamera().enabled = false;
             }
 
-            PlayerTurnQueue[i].GetComponent<Player>().SetCameraPosition(LastCameraPosition);
+            PlayerTurnQueue[i].SetCameraPosition(LastCameraPosition);
         }
 
-        PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().GetCamera().enabled = true;
-        PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().SetPlayerCameraIndex(curPlayerIndex, true);
-        currentCamera = PlayerTurnQueue[curPlayerIndex].GetComponent<Player>().GetCamera();
+        PlayerTurnQueue[curPlayerIndex].GetCamera().enabled = true;
+        PlayerTurnQueue[curPlayerIndex].SetPlayerCameraIndex(curPlayerIndex, true);
+        currentCamera = PlayerTurnQueue[curPlayerIndex].GetCamera();
     }
 }
