@@ -1,29 +1,46 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Mirror;
 
-public class Player : MonoBehaviour
+public class Player : NetworkBehaviour
 {
     public TeamColor teamColor;
     public Camera playerCamera;
     public CameraController cameraController;
-    public Chessboard board;
+    private Chessboard board;
 
     private void Awake()
     {
         cameraController = playerCamera.GetComponent<CameraController>();
+        board = FindObjectOfType<Chessboard>();
     }
 
+    [Client]
+    public override void OnStartAuthority()
+    {
+        playerCamera.gameObject.SetActive(true);
+        playerCamera.enabled = true;
+
+        board.AddPlayer(this);
+    }
+
+    [Client]
     private void Update()
     {
+        if(!hasAuthority)
+        {
+            return;
+        }
+
         cameraController.SetCameraActiveStatus(teamColor.Equals(board.GetActivePlayer()));
     }
 
-    public void InitiatePlayer(TeamColor _teamColor, Chessboard _board)
+    [Client]
+    public void InitiatePlayer(TeamColor _teamColor)
     {
         SetPlayerTeam(_teamColor);
         SetPlayerCameraIndex((int) _teamColor - 1);
-        board = _board;
     }
 
     private void SetPlayerTeam(TeamColor _teamColor)

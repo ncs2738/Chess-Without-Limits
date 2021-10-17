@@ -70,9 +70,9 @@ public class CameraController : MonoBehaviour
 
     private void HandleMovementInput()
     {
-        if(!isCameraActive)
+       //if(!isCameraActive)
         {
-            return;
+           // return;
         }
 
         //Check for if the player presses up on  Q, E, or space & swap to a new fixed camera position

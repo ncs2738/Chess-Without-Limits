@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Mirror;
 
-public class Chessboard : MonoBehaviour
+public class Chessboard : NetworkBehaviour
 {
     [SerializeField]
     private GameObject tile;
@@ -53,7 +54,7 @@ public class Chessboard : MonoBehaviour
 
     //Player data
     public GameObject PlayerPrefab;
-    public int PlayerCount = 2;
+    //public int PlayerCount = 2;
     public List<GameObject> PlayerList = new List<GameObject>();
     public List<Player> PlayerTurnQueue = new List<Player>();
     private TeamColor activePlayer;
@@ -66,6 +67,8 @@ public class Chessboard : MonoBehaviour
     private Vector3 LastCameraPosition;
 
     private bool displayGui = true;
+
+    private bool isGameStarted = false;
 
 
     private void Awake()
@@ -82,10 +85,7 @@ public class Chessboard : MonoBehaviour
             GenerateJaggedBoard(rows, columns);
         }
 
-        AddPlayers();
-
-        //Then read in & spawn the pieces based off of the chess-piece layout script given
-        CreatePiecesFromLayout(currentPieceLayout);
+        //AddPlayers();
     }
 
     private void Update()
@@ -112,12 +112,32 @@ public class Chessboard : MonoBehaviour
             }
         }
 
+        if (!isGameStarted)
+        {
+           CanStartGame();
+           return;
+        }
+
         if (isGameOver)
         {
             return;
         }
 
-        HandleInputs();
+       // HandleInputs();
+    }
+
+    private void CanStartGame()
+    {
+        if(PlayerList.Count == 2)
+        {
+            //Then read in & spawn the pieces based off of the chess-piece layout script given
+            CreatePiecesFromLayout(currentPieceLayout);
+
+            //End the player's set-up turn to start the game~!
+            EndPlayerTurn();
+
+            isGameStarted = true;
+        }
     }
 
     void OnGUI()
@@ -158,6 +178,7 @@ public class Chessboard : MonoBehaviour
         float midX = ((boardLength.y - boardLength.x) - 1) / 2;
         float midZ = ((boardWidth.y - boardWidth.x) - 1) / 2;
 
+        /*
         for (int i = 0; i < PlayerCount; i++)
         {
             PlayerList.Add(Instantiate(PlayerPrefab, new Vector3(midX, 1, midZ), Quaternion.identity));
@@ -174,6 +195,26 @@ public class Chessboard : MonoBehaviour
 
         //End the player's set-up turn to start the game~!
         EndPlayerTurn();
+        */
+    }
+
+    public void AddPlayer(Player player)
+    {
+        PlayerList.Add(player.gameObject);
+        PlayerTurnQueue.Add(player);
+
+        if (PlayerList.Count == 1)
+        {
+            player.InitiatePlayer(TeamColor.White);
+        }
+        else if(PlayerList.Count == 2)
+        {
+            player.InitiatePlayer(TeamColor.Black);
+        }
+        else
+        {
+            player.InitiatePlayer(TeamColor.Gray);
+        }
     }
 
 
@@ -618,8 +659,8 @@ public class Chessboard : MonoBehaviour
     {
         //TODO - find a better way to get the last player's camera cooridanates; this is gross as hell
         int curPlayer = (int) activePlayer - 1;
-        int lastPlayerIndex = curPlayer >= 0 && curPlayer < PlayerTurnQueue.Count ? curPlayer : 0;
-        LastCameraPosition = PlayerTurnQueue[lastPlayerIndex].GetCameraRotation();
+        //int lastPlayerIndex = curPlayer >= 0 && curPlayer < PlayerTurnQueue.Count ? curPlayer : 0;
+        //LastCameraPosition = PlayerTurnQueue[lastPlayerIndex].GetCameraRotation();
         currentTurnIndex++;
 
         if(PlayerTurnQueue.Count > 1)
@@ -630,7 +671,7 @@ public class Chessboard : MonoBehaviour
             }
 
             activePlayer = PlayerTurnQueue[currentTurnIndex].GetPlayerTeamColor();
-            UpdatePlayerCameras();
+            //UpdatePlayerCameras();
         }
     }
 
