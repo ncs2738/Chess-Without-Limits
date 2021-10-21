@@ -53,12 +53,11 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private bool isCameraActive;
 
-    private void Awake()
+    public void InitiateCamera()
     {
         cameraTransform = this.transform;
         parentTransform = this.transform.parent;
         cameraRotation = cameraPositions[cameraPosIndex];
-
         Quaternion cameraQuaternion = Quaternion.Euler(cameraRotation.y, cameraRotation.x, 0);
         parentTransform.rotation = cameraQuaternion;
     }

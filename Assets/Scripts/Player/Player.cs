@@ -12,8 +12,14 @@ public class Player : NetworkBehaviour
 
     private void Awake()
     {
-        cameraController = playerCamera.GetComponent<CameraController>();
         board = FindObjectOfType<Chessboard>();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        board.AddPlayer(this);
     }
 
     [Client]
@@ -21,8 +27,8 @@ public class Player : NetworkBehaviour
     {
         playerCamera.gameObject.SetActive(true);
         playerCamera.enabled = true;
-
-        board.AddPlayer(this);
+        cameraController = playerCamera.GetComponent<CameraController>();
+        cameraController.InitiateCamera();
     }
 
     [Client]
@@ -40,7 +46,11 @@ public class Player : NetworkBehaviour
     public void InitiatePlayer(TeamColor _teamColor)
     {
         SetPlayerTeam(_teamColor);
-        SetPlayerCameraIndex((int) _teamColor - 1);
+        
+        if(hasAuthority)
+        {
+            SetPlayerCameraIndex((int)_teamColor - 1);
+        }
     }
 
     private void SetPlayerTeam(TeamColor _teamColor)

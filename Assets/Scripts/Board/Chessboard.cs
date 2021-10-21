@@ -68,6 +68,7 @@ public class Chessboard : NetworkBehaviour
 
     private bool displayGui = true;
 
+    [SyncVar]
     private bool isGameStarted = false;
 
 
@@ -123,9 +124,12 @@ public class Chessboard : NetworkBehaviour
             return;
         }
 
-       // HandleInputs();
+        currentCamera = PlayerTurnQueue[0].GetCamera();
+
+        HandleInputs();
     }
 
+    //[ClientRpc]
     private void CanStartGame()
     {
         if(PlayerList.Count == 2)
