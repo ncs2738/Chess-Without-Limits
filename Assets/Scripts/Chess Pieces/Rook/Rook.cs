@@ -11,7 +11,7 @@ public class Rook : ChessPiece
         //VERTICAL MOVEMENTS
 
         //check for moves going  down the board
-        for(int i = pieceCoordinates.y - 1; i >= 0 ; i--)
+        for(int i = pieceCoordinates.y - 1; i >= tiles[pieceCoordinates.x].Keys.Min(); i--)
         {
             //check if exists
             if (tiles[pieceCoordinates.x].ContainsKey(i))
@@ -60,10 +60,11 @@ public class Rook : ChessPiece
             }
         }
 
+
         //HORIZONTAL MOVEMENTS
 
         //Check for moves moving left through the board
-        for (int i = pieceCoordinates.x - 1; i >= 0; i--)
+        for (int i = pieceCoordinates.x - 1; i >= tiles.Keys.Min(); i--)
         {
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))
@@ -88,7 +89,7 @@ public class Rook : ChessPiece
         }
 
         //Check for moves moving rigt through the board
-        for (int i = pieceCoordinates.x + 1; i < tiles.Count; i++)
+        for (int i = pieceCoordinates.x + 1; i <= tiles.Keys.Max(); i++)
         {
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class Bishop : ChessPiece
 {
@@ -9,7 +10,7 @@ public class Bishop : ChessPiece
 
         //Check the top-right diagonal for moves
         int tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x + 1; x < tiles.Count; x++)
+        for (int x = pieceCoordinates.x + 1; x < tiles.Keys.Max(); x++)
         {
             tempY++;
 
@@ -37,7 +38,7 @@ public class Bishop : ChessPiece
 
         //Check the top-left diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x - 1; x >= 0 ; x--)
+        for (int x = pieceCoordinates.x - 1; x >= tiles.Keys.Min(); x--)
         {
             tempY++;
 
@@ -66,7 +67,7 @@ public class Bishop : ChessPiece
 
         //Check the bottom-right diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x + 1; x < tiles.Count; x++)
+        for (int x = pieceCoordinates.x + 1; x < tiles.Keys.Max(); x++)
         {
             tempY--;
 
@@ -94,7 +95,7 @@ public class Bishop : ChessPiece
 
         //Check the bottom-left diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x - 1; x >= 0; x--)
+        for (int x = pieceCoordinates.x - 1; x >= tiles.Keys.Min(); x--)
         {
             tempY--;
 

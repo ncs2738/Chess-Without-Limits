@@ -8,10 +8,10 @@ public class Queen : ChessPiece
     {
         List<Vector2Int> moves = new List<Vector2Int>();
 
-        //VERTICAL MOVEMENTS
+        //ROOK MOVEMENTS
 
         //check for moves going  down the board
-        for (int i = pieceCoordinates.y - 1; i >= 0; i--)
+        for (int i = pieceCoordinates.y - 1; i >= tiles[pieceCoordinates.x].Keys.Min(); i--)
         {
             //check if exists
             if (tiles[pieceCoordinates.x].ContainsKey(i))
@@ -60,10 +60,11 @@ public class Queen : ChessPiece
             }
         }
 
+
         //HORIZONTAL MOVEMENTS
 
         //Check for moves moving left through the board
-        for (int i = pieceCoordinates.x - 1; i >= 0; i--)
+        for (int i = pieceCoordinates.x - 1; i >= tiles.Keys.Min(); i--)
         {
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))
@@ -88,7 +89,7 @@ public class Queen : ChessPiece
         }
 
         //Check for moves moving rigt through the board
-        for (int i = pieceCoordinates.x + 1; i < tiles.Count; i++)
+        for (int i = pieceCoordinates.x + 1; i <= tiles.Keys.Max(); i++)
         {
             //check if exists
             if (tiles[i].ContainsKey(pieceCoordinates.y))
@@ -112,12 +113,11 @@ public class Queen : ChessPiece
             }
         }
 
-
         //BISHOP MOVEMENT
 
         //Check the top-right diagonal for moves
         int tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x + 1; x < tiles.Count; x++)
+        for (int x = pieceCoordinates.x + 1; x < tiles.Keys.Max(); x++)
         {
             tempY++;
 
@@ -145,7 +145,7 @@ public class Queen : ChessPiece
 
         //Check the top-left diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x - 1; x >= 0; x--)
+        for (int x = pieceCoordinates.x - 1; x >= tiles.Keys.Min(); x--)
         {
             tempY++;
 
@@ -174,7 +174,7 @@ public class Queen : ChessPiece
 
         //Check the bottom-right diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x + 1; x < tiles.Count; x++)
+        for (int x = pieceCoordinates.x + 1; x < tiles.Keys.Max(); x++)
         {
             tempY--;
 
@@ -202,7 +202,7 @@ public class Queen : ChessPiece
 
         //Check the bottom-left diagonal for moves
         tempY = pieceCoordinates.y;
-        for (int x = pieceCoordinates.x - 1; x >= 0; x--)
+        for (int x = pieceCoordinates.x - 1; x >= tiles.Keys.Min(); x--)
         {
             tempY--;
 
@@ -227,8 +227,6 @@ public class Queen : ChessPiece
                 break;
             }
         }
-
-
 
         return moves;
     }

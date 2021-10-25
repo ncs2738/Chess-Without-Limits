@@ -53,6 +53,12 @@ public class ChessPiece : BoardObject
         }
     }
 
+    public void MoveWithTile(Vector3 tilePosition)
+    {
+        Vector3 newPosition = new Vector3(tilePosition.x, gameObject.transform.position.y, tilePosition.z);
+        SetPosition(newPosition, true);
+    }
+
     public virtual void SetScale(Vector3 newScale, bool instantUpdate = false)
     {
         desiredPosition = newScale;
