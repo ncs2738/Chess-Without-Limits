@@ -327,14 +327,18 @@ public class Chessboard : MonoBehaviour
 
                     // if (DestroyTile(t, hitPos.x, hitPos.y))
                     //if (DestroyTileRow(hitPos))
-                    //if (DestroyTileColumn(hitPos))
+                    if (DestroyTileColumn(hitPos))
                     //{
                     //Set our currently hovered tile to nothing.
                     //currentHoveredTile = noHover;
                     //}
 
                     //CreateTileColumn(hitPos, 1);
-                    CreateTileRow(hitPos, 1);
+                    //CreateTileRow(hitPos, -1);
+
+                    currentHoveredTile = noHover;
+                    //Clear the highlighted tiles
+                    ClearHighlightedTiles();
                 }
             }
         }
@@ -781,10 +785,10 @@ public class Chessboard : MonoBehaviour
         int newRow = pos.y + direction;
 
         //Loop through the x-dictionaries...
-        for(int x = minRow; x <= maxCol; x++)
+        for(int x = minRow; x <= maxRow; x++)
         {
             //SAFETY CHECK: Check if the tiles dictionary contains the current x-pos
-            if(tiles.ContainsKey(x))
+            if (tiles.ContainsKey(x) && tiles[x].ContainsKey(pos.y + offset))
             {
                 //Add & create the new tile
                 tiles[x][newRow] = GenerateSingleTile(x, newRow);
