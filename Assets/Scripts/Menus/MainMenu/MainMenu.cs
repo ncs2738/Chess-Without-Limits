@@ -1,21 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Mirror;
 using UnityEngine.SceneManagement;
 
-public class MainMenu : NetworkManager
+public class MainMenu : MonoBehaviour
 {
-    //Reads in the menu scene
-    [Scene] [SerializeField] private string menuScene = string.Empty;
+    [SerializeField] private NetworkLobbyManager networkManager = null;
 
+    [Header("Main Menu UI")]
+    [SerializeField] private GameObject mainMenu = null;
 
-   // [Header("Room")]
-   // [Scene] [SerializeField] private string menuScene = string.Empty;
-
-    // Update is called once per frame
-    void Update()
+    public void HostLobby()
     {
-        
+        networkManager.StartHost();
+
+        mainMenu.SetActive(false);
+    }
+
+    /* TODO: add for local player
+    public void PlayLocalGame()
+    {
+
+    }
+    */
+
+    public void QuitGame()
+    {
+        Application.Quit();
     }
 }
