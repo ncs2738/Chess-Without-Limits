@@ -70,8 +70,13 @@ public class Chessboard : MonoBehaviour
 
     private Vector2Int noHover = new Vector2Int(-777, -777);
 
+    [SerializeField]
+    private RightClickMenu RCMenu;
+
     //Coin-slotters for board dimensions
     private Dictionary<int, int> yDimensions = new Dictionary<int, int>();
+
+    private bool IsRCMOpen = false;
 
     private void Awake()
     {
@@ -91,6 +96,8 @@ public class Chessboard : MonoBehaviour
 
         //Then read in & spawn the pieces based off of the chess-piece layout script given
         CreatePiecesFromLayout(currentPieceLayout);
+
+        RCMenu.SetBoard(this);
     }
 
     private void Update()
@@ -194,8 +201,54 @@ public class Chessboard : MonoBehaviour
     private void HandleInputs()
     {
         //Do a raycast check to see if the player's hovering over any tiles (and soon to be pieces)
-        RaycastHit raycast;
         Ray ray = currentCamera.ScreenPointToRay(Input.mousePosition);
+        if(!IsRCMOpen)
+        {
+            GetHoveredTile(ray);
+        }
+        
+
+        //REMOVING PIECE ANIMATION
+        //If a piece is currently moving across the board & attacking another piece...
+        if (IsPieceAttacking)
+        {
+            //Wait until it's close enough to the attacked piece...
+            if (Vector3.Distance(attackingPiece.transform.position, pieceToBeRemoved.transform.position) < .35f)
+            {
+                //Then remove the attacked from piece from play...
+                GameObject.Destroy(pieceToBeRemoved.gameObject);
+                //and finish the call.
+                IsPieceAttacking = false;
+
+                if (PlayerTurnQueue.Count == 1)
+                {
+                    isGameOver = true;
+                    DisplayVictoryScreen();
+                }
+            }
+        }
+
+        //DRAG ANIMATION
+        //If we're currently dragging a chess piece...
+        //TODO - PROBABLY WILL WANT TO HAVE THIS JUST FOLLOW THE MOUSE INSTEAD...
+        if (currentlyDragged)
+        {
+            //Cast a plane onto the board to check for it's position
+            Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * 1f);
+
+            //Get it's distance from the board...
+            float distance = 0.0f;
+            if (horizontalPlane.Raycast(ray, out distance))
+            {
+                //Set it's new position to the distance
+                currentlyDragged.SetPosition(ray.GetPoint(distance) + Vector3.up * 1.5f);
+            }
+        }
+    }
+
+    private void GetHoveredTile(Ray ray)
+    {
+        RaycastHit raycast;
 
         //If the player's hovering over a tile...
         if (Physics.Raycast(ray, out raycast, 100, LayerMask.GetMask("Tile")))
@@ -320,6 +373,9 @@ public class Chessboard : MonoBehaviour
                 //If we just right-clicked on a tile while not dragging any pieces...
                 if (currentlyDragged == null && Input.GetKeyDown(KeyCode.Mouse1))
                 {
+                    //OPEN THE UI
+                    RCMenu.gameObject.SetActive(true);
+
                     //aaaaaaaaaa
 
                     //isRemoved = DestroyTileColumn(hitPos);
@@ -327,7 +383,7 @@ public class Chessboard : MonoBehaviour
 
                     // if (DestroyTile(t, hitPos.x, hitPos.y))
                     //if (DestroyTileRow(hitPos))
-                    if (DestroyTileColumn(hitPos))
+                    //if (DestroyTileColumn(hitPos))
                     //{
                     //Set our currently hovered tile to nothing.
                     //currentHoveredTile = noHover;
@@ -336,9 +392,9 @@ public class Chessboard : MonoBehaviour
                     //CreateTileColumn(hitPos, 1);
                     //CreateTileRow(hitPos, -1);
 
-                    currentHoveredTile = noHover;
+                    //currentHoveredTile = noHover;
                     //Clear the highlighted tiles
-                    ClearHighlightedTiles();
+                    //ClearHighlightedTiles();
                 }
             }
         }
@@ -372,49 +428,12 @@ public class Chessboard : MonoBehaviour
                 ClearHighlightedTiles();
             }
         }
-
-        //REMOVING PIECE ANIMATION
-        //If a piece is currently moving across the board & attacking another piece...
-        if (IsPieceAttacking)
-        {
-            //Wait until it's close enough to the attacked piece...
-            if (Vector3.Distance(attackingPiece.transform.position, pieceToBeRemoved.transform.position) < .35f)
-            {
-                //Then remove the attacked from piece from play...
-                GameObject.Destroy(pieceToBeRemoved.gameObject);
-                //and finish the call.
-                IsPieceAttacking = false;
-
-                if (PlayerTurnQueue.Count == 1)
-                {
-                    isGameOver = true;
-                    DisplayVictoryScreen();
-                }
-            }
-        }
-
-        //DRAG ANIMATION
-        //If we're currently dragging a chess piece...
-        //TODO - PROBABLY WILL WANT TO HAVE THIS JUST FOLLOW THE MOUSE INSTEAD...
-        if (currentlyDragged)
-        {
-            //Cast a plane onto the board to check for it's position
-            Plane horizontalPlane = new Plane(Vector3.up, Vector3.up * 1f);
-
-            //Get it's distance from the board...
-            float distance = 0.0f;
-            if (horizontalPlane.Raycast(ray, out distance))
-            {
-                //Set it's new position to the distance
-                currentlyDragged.SetPosition(ray.GetPoint(distance) + Vector3.up * 1.5f);
-            }
-        }
     }
 
     //COMENTED UP TILL HERE
-    private bool DestroyTileRow(Vector2Int pos)
+    public void DestroyTileRow()
     {
-        bool isInterrupted = false;
+        Vector2Int pos = currentHoveredTile;
 
         //First, we need to check all the tiles across the row...
         //Start by looping through all x-tile dictionary...
@@ -427,109 +446,104 @@ public class Chessboard : MonoBehaviour
                 if (tiles[x][pos.y].tilePlacements[0].Contains(MappedTileType.ChessPiece))
                 {
                     //The tile's not empty; we've been interrupted.
-                    isInterrupted = true;
                     //Break out of the search.
-                    break;
+                    return;
                 }
             }
         }
 
-        //If we can destroy the row...
-        if (!isInterrupted)
+        //Grab the board's min & max y-values from the y-dimension list
+        int minCol = yDimensions.Keys.Min();
+        int maxCol = yDimensions.Keys.Max();
+
+        //And grab the middle difference between the two...
+        int midBoard = (maxCol - minCol) / 2;
+
+        //Now loop through all the tiles until we get to the row we're deleting...
+        //First loop through the x-dictionaries...
+        for (int x = tiles.Keys.Min(); x <= tiles.Keys.Max(); x++)
         {
-            //Grab the board's min & max y-values from the y-dimension list
-            int minCol = yDimensions.Keys.Min();
-            int maxCol = yDimensions.Keys.Max();
-
-            //And grab the middle difference between the two...
-            int midBoard = (maxCol - minCol) / 2;
-
-            //Now loop through all the tiles until we get to the row we're deleting...
-            //First loop through the x-dictionaries...
-            for (int x = tiles.Keys.Min(); x <= tiles.Keys.Max(); x++)
+            //check if we're above or below the middle of the board...
+            if (pos.y >= midBoard)
             {
-                //check if we're above or below the middle of the board...
-                if (pos.y >= midBoard)
+                //We're above! So start pos.y & move up to the top of the board.
+                //Check if we're not deleting a tile past this x-row's farthest y-tile...
+                if (maxCol >= pos.y)
                 {
-                    //We're above! So start pos.y & move up to the top of the board.
-                    //Check if we're not deleting a tile past this x-row's farthest y-tile...
-                    if (maxCol >= pos.y)
+                    //Start at our pos.y, then move up until we get to the end of the y-dictionaries...
+                    for (int y = pos.y; y <= maxCol; y++)
                     {
-                        //Start at our pos.y, then move up until we get to the end of the y-dictionaries...
-                        for (int y = pos.y; y <= maxCol; y++)
+                        //First check if the key exists in the x-dictionary...
+                        if (tiles[x].ContainsKey(y))
                         {
-                            //First check if the key exists in the x-dictionary...
-                            if (tiles[x].ContainsKey(y))
+                            //Then check if it's the tile we're deleting...
+                            if (y == pos.y)
                             {
-                                //Then check if it's the tile we're deleting...
-                                if (y == pos.y)
-                                {
-                                    //Destroy the tile...
-                                    Destroy(tiles[x][y].gameObject);
-                                    //And remove it from the dictionary
-                                    tiles[x].Remove(y);
+                                //Destroy the tile...
+                                Destroy(tiles[x][y].gameObject);
+                                //And remove it from the dictionary
+                                tiles[x].Remove(y);
 
-                                    //Remove the tally form the y-dimension total
-                                    RemoveFromYDimensions(y);
-                                }
-                                else
-                                {
-                                    //Update the tile's board-index to be 1 row down.
-                                    tiles[x][y].SetBoardIndex(x, y - 1);
-                                    //Move the tiles to fill the gaps
-                                    tiles[x][y].SetTilePosition(new Vector3Int(x, 0, y - 1));
-                                    //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
-                                    tiles[x][y - 1] = tiles[x][y];
-                                    //And remove the current tile from the dictionary
-                                    tiles[x].Remove(y);
+                                //Remove the tally form the y-dimension total
+                                RemoveFromYDimensions(y);
+                            }
+                            else
+                            {
+                                //Update the tile's board-index to be 1 row down.
+                                tiles[x][y].SetBoardIndex(x, y - 1);
+                                //Move the tiles to fill the gaps
+                                tiles[x][y].SetTilePosition(new Vector3Int(x, 0, y - 1));
+                                //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
+                                tiles[x][y - 1] = tiles[x][y];
+                                //And remove the current tile from the dictionary
+                                tiles[x].Remove(y);
 
-                                    //Remove the tally form the y-dimension total
-                                    RemoveFromYDimensions(y);
-                                    //And add it to it's new y-dimension
-                                    AddToYDimensions(y - 1);
-                                }
+                                //Remove the tally form the y-dimension total
+                                RemoveFromYDimensions(y);
+                                //And add it to it's new y-dimension
+                                AddToYDimensions(y - 1);
                             }
                         }
                     }
                 }
-                else
+            }
+            else
+            {
+                //We're below! So start at pos.y & move down to the bottom of the board.
+                //Check if we're not deleting a tile past this x-row's lowest y-tile...
+                if (pos.y >= minCol)
                 {
-                    //We're below! So start at pos.y & move down to the bottom of the board.
-                    //Check if we're not deleting a tile past this x-row's lowest y-tile...
-                    if (pos.y >= minCol)
+                    //Start at our pos.y, then move back until we get to the start of the y-dictionaries...
+                    for (int y = pos.y; y >= minCol; y--)
                     {
-                        //Start at our pos.y, then move back until we get to the start of the y-dictionaries...
-                        for (int y = pos.y; y >= minCol; y--)
+                        //First check if the key exists in the x-dictionary...
+                        if (tiles[x].ContainsKey(y))
                         {
-                            //First check if the key exists in the x-dictionary...
-                            if (tiles[x].ContainsKey(y))
+                            //Then check if it's the tile we're deleting...
+                            if (y == pos.y)
                             {
-                                //Then check if it's the tile we're deleting...
-                                if (y == pos.y)
-                                {
-                                    //Destroy the tile...
-                                    Destroy(tiles[x][y].gameObject);
-                                    //And remove it from the dictionary
-                                    tiles[x].Remove(y);
-                                    //Remove the tally form the y-dimension total
-                                    RemoveFromYDimensions(y);
-                                }
-                                else
-                                {
-                                    //Update the tile's board-index to be 1 row up.
-                                    tiles[x][y].SetBoardIndex(x, y + 1);
-                                    //Move the tiles to fill the gaps
-                                    tiles[x][y].SetTilePosition(new Vector3Int(x, 0, y + 1));
-                                    //And update the tile dictionary as well; move the tile ip 1 column in the dictionary...
-                                    tiles[x][y + 1] = tiles[x][y];
-                                    //And remove the current tile from the dictionary
-                                    tiles[x].Remove(y);
+                                //Destroy the tile...
+                                Destroy(tiles[x][y].gameObject);
+                                //And remove it from the dictionary
+                                tiles[x].Remove(y);
+                                //Remove the tally form the y-dimension total
+                                RemoveFromYDimensions(y);
+                            }
+                            else
+                            {
+                                //Update the tile's board-index to be 1 row up.
+                                tiles[x][y].SetBoardIndex(x, y + 1);
+                                //Move the tiles to fill the gaps
+                                tiles[x][y].SetTilePosition(new Vector3Int(x, 0, y + 1));
+                                //And update the tile dictionary as well; move the tile ip 1 column in the dictionary...
+                                tiles[x][y + 1] = tiles[x][y];
+                                //And remove the current tile from the dictionary
+                                tiles[x].Remove(y);
 
-                                    //Remove the tally form the y-dimension total
-                                    RemoveFromYDimensions(y);
-                                    //And add it to it's new y-dimension
-                                    AddToYDimensions(y + 1);
-                                }
+                                //Remove the tally form the y-dimension total
+                                RemoveFromYDimensions(y);
+                                //And add it to it's new y-dimension
+                                AddToYDimensions(y + 1);
                             }
                         }
                     }
@@ -537,12 +551,12 @@ public class Chessboard : MonoBehaviour
             }
         }
 
-        return !isInterrupted;
+        currentHoveredTile = noHover;
     }
 
-    private bool DestroyTileColumn(Vector2Int pos)
+    public void DestroyTileColumn()
     {
-        bool isInterrupted = false;
+        Vector2Int pos = currentHoveredTile;
 
         //First, grab the selected column's min & max y-key values
         int minCol = yDimensions.Keys.Min();
@@ -558,131 +572,128 @@ public class Chessboard : MonoBehaviour
                 if (tiles[pos.x][y].tilePlacements[0].Contains(MappedTileType.ChessPiece))
                 {
                     //The tile's not empty; we've been interrupted.
-                    isInterrupted = true;
                     //Break out of the search.
-                    break;
+                    return;
                 }
             }
         }
 
-        //Then see if we can delete the Column...
-        if(!isInterrupted)
+        //We can delete the tile, so loop through all of the tiles in the column again...
+        for (int y = minCol; y <= maxCol; y++)
         {
-            //We can, so loop through all of the tiles in the column again...
-            for (int y = minCol; y <= maxCol; y++)
+            //Check if the x-dictionary contains a tile...
+            if (tiles[pos.x].ContainsKey(y))
             {
-                //Check if the x-dictionary contains a tile...
-                if (tiles[pos.x].ContainsKey(y))
-                {
-                    //It does, so destroy the game object...
-                    Destroy(tiles[pos.x][y].gameObject);
-                    //And remove it from the dictionary.
-                    tiles[pos.x].Remove(y);
+                //It does, so destroy the game object...
+                Destroy(tiles[pos.x][y].gameObject);
+                //And remove it from the dictionary.
+                tiles[pos.x].Remove(y);
 
-                    //Remove the count from the y-dimensions list
-                    RemoveFromYDimensions(y);
+                //Remove the count from the y-dimensions list
+                RemoveFromYDimensions(y);
+            }
+        }
+
+        //Now that the column's empty, remove it from the dictionary.
+        tiles.Remove(pos.x);
+
+        //Grab the board's min & max y-values from the y-dimension list
+        int minRow = tiles.Keys.Min();
+        int maxRow = tiles.Keys.Max();
+
+        //And grab the middle difference between the two...
+        int midBoard = (maxRow - minRow) / 2;
+
+        //Next, check if we removed a column from the left or right of the board...
+        if (pos.x < midBoard)
+        {
+            //We removed from the left!
+            //Check if there's still remaining rows to me moved...
+            if(pos.x > minRow)
+            {
+                //Start at our pos.x - 1, then move left until we get to the start of the x-dictionaries...
+                for (int x = pos.x - 1; x >= minRow; x--)
+                {
+                    //Loop through the entire y-dictionary
+                    for (int y = minCol; y <= maxCol; y++)
+                    {
+                        //First check if the key exists in the x-dictionary...
+                        if (tiles[x].ContainsKey(y))
+                        {
+                            //Update the tile's board-index to be 1 row down.
+                            tiles[x][y].SetBoardIndex(x + 1, y);
+                            //Move the tiles to fill the gaps
+                            tiles[x][y].SetTilePosition(new Vector3Int(x + 1, 0, y));
+                        }
+                    }
+
+                    //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
+                    tiles[x + 1] = tiles[x];
+                    //And remove the current tile from the dictionary
+                    tiles.Remove(x);
                 }
             }
-
-            //Now that the column's empty, remove it from the dictionary.
-            tiles.Remove(pos.x);
-
-            //Grab the board's min & max y-values from the y-dimension list
-            int minRow = tiles.Keys.Min();
-            int maxRow = tiles.Keys.Max();
-
-            //And grab the middle difference between the two...
-            int midBoard = (maxRow - minRow) / 2;
-
-            //Next, check if we removed a column from the left or right of the board...
-            if (pos.x < midBoard)
+        }
+        else
+        {
+            //We removed from the right!
+            //Check if there's still remaining rows to me moved...
+            if (pos.x < maxRow)
             {
-                //We removed from the left!
-                //Check if there's still remaining rows to me moved...
-                if(pos.x > minRow)
+                //Start at our pos.x + 1, then move right until we get to the end of the x-dictionaries...
+                for (int x = pos.x + 1; x <= maxRow; x++)
                 {
-                    //Start at our pos.x - 1, then move left until we get to the start of the x-dictionaries...
-                    for (int x = pos.x - 1; x >= minRow; x--)
+                    //Start at the end of the y-dictionaries, then move back until we get to our pos.y...
+                    for (int y = minCol; y <= maxCol; y++)
                     {
-                        //Loop through the entire y-dictionary
-                        for (int y = minCol; y <= maxCol; y++)
+                        //First check if the key exists in the x-dictionary...
+                        if (tiles[x].ContainsKey(y))
                         {
-                            //First check if the key exists in the x-dictionary...
-                            if (tiles[x].ContainsKey(y))
-                            {
-                                //Update the tile's board-index to be 1 row down.
-                                tiles[x][y].SetBoardIndex(x + 1, y);
-                                //Move the tiles to fill the gaps
-                                tiles[x][y].SetTilePosition(new Vector3Int(x + 1, 0, y));
-                            }
+                            //Update the tile's board-index to be 1 row down.
+                            tiles[x][y].SetBoardIndex(x - 1, y);
+                            //Move the tiles to fill the gaps
+                            tiles[x][y].SetTilePosition(new Vector3Int(x - 1, 0, y));
                         }
-
-                        //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
-                        tiles[x + 1] = tiles[x];
-                        //And remove the current tile from the dictionary
-                        tiles.Remove(x);
                     }
-                }
-            }
-            else
-            {
-                //We removed from the right!
-                //Check if there's still remaining rows to me moved...
-                if (pos.x < maxRow)
-                {
-                    //Start at our pos.x + 1, then move right until we get to the end of the x-dictionaries...
-                    for (int x = pos.x + 1; x <= maxRow; x++)
-                    {
-                        //Start at the end of the y-dictionaries, then move back until we get to our pos.y...
-                        for (int y = minCol; y <= maxCol; y++)
-                        {
-                            //First check if the key exists in the x-dictionary...
-                            if (tiles[x].ContainsKey(y))
-                            {
-                                //Update the tile's board-index to be 1 row down.
-                                tiles[x][y].SetBoardIndex(x - 1, y);
-                                //Move the tiles to fill the gaps
-                                tiles[x][y].SetTilePosition(new Vector3Int(x - 1, 0, y));
-                            }
-                        }
 
-                        //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
-                        tiles[x - 1] = tiles[x];
-                        //And remove the current tile from the dictionary
-                        tiles.Remove(x);
-                    }
+                    //And update the tile dictionary as well; move the tile down 1 column in the dictionary...
+                    tiles[x - 1] = tiles[x];
+                    //And remove the current tile from the dictionary
+                    tiles.Remove(x);
                 }
             }
         }
 
-        return !isInterrupted;
+        currentHoveredTile = noHover;
     }
 
-    private bool DestroyTile(Tile selectedTile, int posX, int posY)
+    public void DestroyTile()
     {
+        Vector2Int pos = currentHoveredTile;
+
         //If the currently tile & it's selected face does not have a chess piece atop of it
-        if (!selectedTile.tilePlacements[0].Contains(MappedTileType.ChessPiece))
+        if (!tiles[pos.x][pos.y].tilePlacements[0].Contains(MappedTileType.ChessPiece))
         {
+            //Destroy the gameobject
+            Destroy(tiles[pos.x][pos.y].gameObject);
+
             //Remove the tile from the y-row tile dictionary.
-            tiles[posX].Remove(posY);
+            tiles[pos.x].Remove(pos.y);
 
             //Check to see if that row is now empty...
-            if(tiles[posX].Count == 0)
+            if(tiles[pos.x].Count == 0)
             {
                 //it is empty, so destroy the row.
-                tiles.Remove(posX);
+                tiles.Remove(pos.x);
             }
-
-            //Now, destroy the tile gameobject.
-            Destroy(selectedTile.gameObject);
-            return true;
         }
 
-        return false;
+        currentHoveredTile = noHover;
     }
 
-    private void CreateTileRow(Vector2Int pos, int direction)
+    public void CreateTileRow(int direction)
     {
+        Vector2Int pos = currentHoveredTile;
 
         //Grab the board's min & max y-values from the y-dimension list
         int minCol = yDimensions.Keys.Min();
@@ -796,8 +807,10 @@ public class Chessboard : MonoBehaviour
         }
     }
 
-    private void CreateTileColumn(Vector2Int pos, int direction)
+    public void CreateTileColumn(int direction)
     {
+        Vector2Int pos = currentHoveredTile;
+
         //TODO explain offset - needed for inner-board creations cuz the original column may move
         int offset = 0;
 
@@ -1246,5 +1259,10 @@ public class Chessboard : MonoBehaviour
         PlayerTurnQueue[curPlayerIndex].GetCamera().enabled = true;
         PlayerTurnQueue[curPlayerIndex].SetPlayerCameraIndex(curPlayerIndex, true);
         currentCamera = PlayerTurnQueue[curPlayerIndex].GetCamera();
+    }
+
+    public void SetRCMStatus(bool isOpen)
+    {
+        IsRCMOpen = isOpen;
     }
 }
